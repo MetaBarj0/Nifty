@@ -1,4 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface INifty { }
+import { IERC721 } from "./IERC721.sol";
+
+interface INifty is IERC721 {
+  /// @notice A specify INifty error
+  /// @dev Specifically thrown at mint time if the provided token id has
+  ///  already be minted in case if its' not self-explanatory enough
+  error TokenAlreadyMinted();
+
+  /// @notice A specific INifty error
+  /// @dev Specifically thrown at ownership check
+  error InvalidTokenId();
+
+  /// @notice A specific INifty error
+  /// @dev Specifically thrown when attempted operation are forbidden because
+  ///  of ownership or approval issues.
+  error Unauthorized();
+
+  /// @notice A specific INifty error
+  /// @dev Specifically thrown when calling unsupported operation in
+  ///  implementation contract (for instance, Nifty.transferFrom)
+  error Unsupported();
+
+  /// @notice A specific INifty mint feature
+  /// @dev Using this function a user can mint a token for free. You can
+  ///  disable it in implementation by throwing if you like.
+  ///  According to IERC721, a mint must emit the Transfer event with the
+  ///  `from` parameter set to address(0)
+  /// @param to the user to mint token for.
+  function mint(address to, uint256 tokenId) external;
+}

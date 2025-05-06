@@ -8,14 +8,14 @@ import { INifty } from "../src/interfaces/INifty.sol";
 import { Test } from "forge-std/Test.sol";
 
 contract DeploymentTests is Test {
-  Nifty private token;
+  Nifty private nifty;
 
   function setUp() public {
-    token = new Nifty();
+    nifty = new Nifty();
   }
 
   function test_supports_interface() public view {
-    assertEq(token.supportsInterface(type(IERC165).interfaceId), true);
-    assertEq(token.supportsInterface(type(INifty).interfaceId), true);
+    assertEq(nifty.supportsInterface(type(IERC165).interfaceId), true);
+    assertEq(nifty.supportsInterface(type(INifty).interfaceId), true);
   }
 }

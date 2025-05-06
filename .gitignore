@@ -16,3 +16,6 @@ docs/
 
 # local blockchain running
 .anvil.pid
+
+# crashing processes
+core.*
