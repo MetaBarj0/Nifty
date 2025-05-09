@@ -4,15 +4,21 @@ pragma solidity 0.8.29;
 import { ERC165 } from "./ERC165.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
+import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
-contract Nifty is INifty, ERC165 {
+contract Nifty is INifty, IERC721Enumerable, ERC165 {
   address public immutable creator;
 
-  mapping(uint256 => address) public tokenIdToOwner;
-  mapping(address => uint256) balances;
+  mapping(uint256 => address) private tokenIdToOwner;
+  mapping(address => uint256) private balances;
   mapping(uint256 => address) private tokenIdToApproved;
-  mapping(address owner => mapping(address operator => bool)) ownerToOperatorApproval;
+  mapping(address owner => mapping(address operator => bool)) private ownerToOperatorApproval;
+  mapping(uint256 tokenId => uint256 tokensIndex) private tokenIdToAllTokensIndex;
+  mapping(address owner => mapping(uint256 index => uint256 tokenId)) private ownerTokenIndexToTokenId;
+  mapping(address owner => mapping(uint256 tokenId => uint256 tokenIndex)) private ownerTokenIdToTokenIndex;
+
+  uint256[] private allTokens;
 
   constructor() {
     creator = msg.sender;
@@ -84,11 +90,64 @@ contract Nifty is INifty, ERC165 {
   }
 
   function mint(address to, uint256 tokenId) external {
+    require(to != address(0), InvalidAddress());
     require(tokenIdToOwner[tokenId] == address(0), TokenAlreadyMinted());
 
     tokenIdToOwner[tokenId] = to;
+
+    allTokens.push(tokenId);
+    tokenIdToAllTokensIndex[tokenId] = allTokens.length - 1;
+
+    ownerTokenIndexToTokenId[to][balances[to]] = tokenId;
+    ownerTokenIdToTokenIndex[to][tokenId] = balances[to];
+
     balances[to]++;
 
     emit IERC721.Transfer(address(0), to, tokenId);
+  }
+
+  function burn(uint256 tokenId) external {
+    address tokenOwner = tokenIdToOwner[tokenId];
+    require(tokenOwner != address(0), InvalidTokenId());
+    require(
+      tokenOwner == msg.sender || tokenIdToApproved[tokenId] == msg.sender
+        || ownerToOperatorApproval[tokenOwner][msg.sender],
+      Unauthorized()
+    );
+
+    uint256 tokenIndex = tokenIdToAllTokensIndex[tokenId];
+    uint256 lastTokenIndex = allTokens.length - 1;
+    uint256 lastTokenId = allTokens[lastTokenIndex];
+    allTokens[tokenIndex] = lastTokenId;
+    allTokens.pop();
+    delete tokenIdToAllTokensIndex[tokenId];
+    tokenIdToAllTokensIndex[lastTokenId] = tokenIndex;
+
+    uint256 ownerTokenIndex = ownerTokenIdToTokenIndex[tokenOwner][tokenId];
+    uint256 lastOwnerTokenIndex = balances[tokenOwner] - 1;
+    uint256 lastOwnerTokenId = ownerTokenIndexToTokenId[tokenOwner][lastOwnerTokenIndex];
+    ownerTokenIndexToTokenId[tokenOwner][ownerTokenIndex] = lastOwnerTokenId;
+    delete ownerTokenIndexToTokenId[tokenOwner][lastOwnerTokenIndex];
+    ownerTokenIdToTokenIndex[tokenOwner][lastOwnerTokenId] = ownerTokenIndex;
+
+    delete tokenIdToOwner[tokenId];
+    balances[tokenOwner]--;
+  }
+
+  function totalSupply() public view returns (uint256) {
+    return allTokens.length;
+  }
+
+  function tokenByIndex(uint256 index) external view returns (uint256) {
+    require(index < totalSupply(), IndexOutOfBound());
+
+    return allTokens[index];
+  }
+
+  function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256) {
+    require(owner != address(0), InvalidTokenId());
+    require(index < balances[owner], IndexOutOfBound());
+
+    return ownerTokenIndexToTokenId[owner][index];
   }
 }

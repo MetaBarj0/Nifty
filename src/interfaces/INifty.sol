@@ -23,11 +23,32 @@ interface INifty is IERC721 {
   ///  implementation contract (for instance, Nifty.transferFrom)
   error Unsupported();
 
+  /// @notice A specific INifty error
+  /// @dev Specifically thrown when using an invalid address (e.g. 0 address at
+  ///  minting) with INifty functions.
+  error InvalidAddress();
+
+  /// @notice A specific INifty error
+  /// @dev Specifically thrown when using ERC721 enumerable features
+  error IndexOutOfBound();
+
   /// @notice A specific INifty mint feature
   /// @dev Using this function a user can mint a token for free. You can
   ///  disable it in implementation by throwing if you like.
   ///  According to IERC721, a mint must emit the Transfer event with the
   ///  `from` parameter set to address(0)
-  /// @param to the user to mint token for.
+  /// @param to the user to mint token for. Cannot be 0 address.
+  /// @param tokenId the identifier of the token to mint. A token with this
+  ///  identifier must not already exist.
   function mint(address to, uint256 tokenId) external;
+
+  /// @notice A specific INifty burn feature
+  /// @dev Using this function a token owner can burn his owned previously
+  ///  minted tokens. You can disable it in implementation by throwing if you
+  ///  like.
+  ///  According to IERC721, a mint must emit the Transfer event with the
+  ///  `from` parameter set to address(0)
+  /// @param tokenId the identifier of a token to burn. The token must be owned
+  ///  by the user.
+  function burn(uint256 tokenId) external;
 }
