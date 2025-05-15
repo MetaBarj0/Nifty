@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.29;
+
+import { Nifty } from "../src/Nifty.sol";
+import { INifty } from "../src/interfaces/INifty.sol";
+
+import { FailingReceiver } from "./FailingReceiver.sol";
+import { InvalidReceiver } from "./InvalidReceiver.sol";
+import { NonCompliantReceiver } from "./NonCompliantReceiver.sol";
+import { ValidReceiver } from "./ValidReceiver.sol";
+
+import { Test } from "forge-std/Test.sol";
+
+contract ERC721TokenReceiverTests is Test {
+  Nifty private nifty;
+  address private alice;
+  InvalidReceiver private invalidReceiver;
+  FailingReceiver private failingReceiver;
+  NonCompliantReceiver private nonCompliantReceiver;
+  ValidReceiver private validReceiver;
+
+  function setUp() public {
+    nifty = new Nifty();
+    invalidReceiver = new InvalidReceiver();
+    failingReceiver = new FailingReceiver();
+    nonCompliantReceiver = new NonCompliantReceiver();
+    validReceiver = new ValidReceiver();
+    alice = makeAddr("Alice");
+  }
+
+  function test_mint_throws_withInvalidReceiverContract() public {
+    vm.expectPartialRevert(INifty.InvalidReceiver.selector);
+    nifty.mint(address(invalidReceiver), 0);
+  }
+
+  function test_mint_throws_withFailingReceiverContract() public {
+    vm.expectRevert();
+    nifty.mint(address(failingReceiver), 0);
+  }
+
+  function test_mint_throws_withNonCompliantReceiverContract() public {
+    vm.expectPartialRevert(INifty.InvalidReceiver.selector);
+    nifty.mint(address(nonCompliantReceiver), 0);
+  }
+
+  function test_safeTransferFrom_throws_withInvalidReceiverContract() public {
+    nifty.mint(alice, 0);
+
+    vm.startPrank(alice);
+    vm.expectPartialRevert(INifty.InvalidReceiver.selector);
+    nifty.safeTransferFrom(alice, address(invalidReceiver), 0);
+    vm.stopPrank();
+  }
+
+  function test_safeTransferFrom_throws_withFailingReceiverContract() public {
+    nifty.mint(alice, 0);
+
+    vm.startPrank(alice);
+    vm.expectRevert();
+    nifty.safeTransferFrom(alice, address(invalidReceiver), 0);
+    vm.stopPrank();
+  }
+
+  function test_safeTransferFrom_throws_withNonCompliantReceiverContract() public {
+    nifty.mint(alice, 0);
+
+    vm.startPrank(alice);
+    vm.expectRevert();
+    nifty.safeTransferFrom(alice, address(nonCompliantReceiver), 0);
+    vm.stopPrank();
+  }
+
+  function test_mint_succeeds_WithValidReceiverContract() public {
+    vm.expectEmit();
+    emit ValidReceiver.Received(address(this), address(0), 0);
+    nifty.mint(address(validReceiver), 0);
+
+    assertEq(nifty.balanceOf(address(validReceiver)), 1);
+  }
+
+  function test_safeTransferFrom_succeeds_withValidReceiverContract() public {
+    nifty.mint(alice, 0);
+
+    vm.startPrank(alice);
+    vm.expectEmit();
+    emit ValidReceiver.Received(alice, alice, 0);
+    nifty.safeTransferFrom(alice, address(validReceiver), 0, "validReceiver test");
+    vm.stopPrank();
+
+    assertEq(nifty.balanceOf(address(validReceiver)), 1);
+  }
+}

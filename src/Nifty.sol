@@ -5,6 +5,7 @@ import { ERC165 } from "./ERC165.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
+import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
 contract Nifty is INifty, IERC721Enumerable, ERC165 {
@@ -56,6 +57,8 @@ contract Nifty is INifty, IERC721Enumerable, ERC165 {
     tokenIdToOwner[tokenId] = to;
     delete tokenIdToApproved[tokenId];
 
+    tryReceive(msg.sender, from, to, tokenId, data);
+
     emit IERC721.Transfer(from, to, tokenId);
   }
 
@@ -103,6 +106,8 @@ contract Nifty is INifty, IERC721Enumerable, ERC165 {
 
     balances[to]++;
 
+    tryReceive(msg.sender, address(0), to, tokenId, "");
+
     emit IERC721.Transfer(address(0), to, tokenId);
   }
 
@@ -149,5 +154,21 @@ contract Nifty is INifty, IERC721Enumerable, ERC165 {
     require(index < balances[owner], IndexOutOfBound());
 
     return ownerTokenIndexToTokenId[owner][index];
+  }
+
+  function tryReceive(address operator, address from, address to, uint256 tokenId, bytes memory data) private {
+    if (to.code.length > 0) {
+      try IERC721TokenReceiver(to).onERC721Received(operator, from, tokenId, data) returns (bytes4 result) {
+        require(result == IERC721TokenReceiver.onERC721Received.selector, InvalidReceiver(to));
+      } catch (bytes memory reason) {
+        if (reason.length > 0) {
+          assembly ("memory-safe") {
+            revert(add(reason, 0x20), mload(reason))
+          }
+        } else {
+          revert InvalidReceiver(to);
+        }
+      }
+    }
   }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @dev Note: the ERC-165 identifier for this interface is 0x150b7a02.
-interface ERC721TokenReceiver {
+interface IERC721TokenReceiver {
   /// @notice Handle the receipt of an NFT
   /// @dev The ERC721 smart contract calls this function on the recipient
   ///  after a `transfer`. This function MAY throw to revert and reject the
@@ -15,7 +15,7 @@ interface ERC721TokenReceiver {
   /// @param data Additional data with no specified format
   /// @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
   ///  unless throwing
-  function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+  function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)
     external
     returns (bytes4);
 }

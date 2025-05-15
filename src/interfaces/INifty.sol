@@ -32,6 +32,13 @@ interface INifty is IERC721 {
   /// @dev Specifically thrown when using ERC721 enumerable features
   error IndexOutOfBound();
 
+  /// @notice A specific INifty error
+  /// @dev specifically thrown in a safeTransferFrom call that fail to call a
+  ///  compliant onERC721Received function as defined in the
+  ///  IERC721TokenReceiver interface
+  /// @param to the faulty receiver address
+  error InvalidReceiver(address to);
+
   /// @notice A specific INifty mint feature
   /// @dev Using this function a user can mint a token for free. You can
   ///  disable it in implementation by throwing if you like.
