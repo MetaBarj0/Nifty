@@ -6,6 +6,7 @@ import { Nifty } from "../src/Nifty.sol";
 import { Nifty } from "../src/Nifty.sol";
 import { IERC721 } from "../src/interfaces/IERC721.sol";
 import { IERC721Enumerable } from "../src/interfaces/IERC721Enumerable.sol";
+import { IMintable } from "../src/interfaces/IMintable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
@@ -22,7 +23,7 @@ contract NiftyTests is Test, NiftyTestUtils {
   }
 
   function test_mint_throw_ifNotPaid() public {
-    vm.expectRevert(INifty.WrongPaymentValue.selector);
+    vm.expectRevert(IMintable.WrongPaymentValue.selector);
     nifty.mint(bob, 42);
   }
 
