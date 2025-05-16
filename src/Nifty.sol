@@ -2,16 +2,18 @@
 pragma solidity 0.8.29;
 
 import { ERC165 } from "./ERC165.sol";
+
+import { IBurnable } from "./interfaces/IBurnable.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
-import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
-
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
+import { IMintable } from "./interfaces/IMintable.sol";
 import { INifty } from "./interfaces/INifty.sol";
+import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 
-contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, IOwnable2Steps, ERC165 {
+contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, IOwnable2Steps, IMintable, IBurnable, ERC165 {
   address public immutable creator;
 
   mapping(uint256 => address) private tokenIdToOwner;
