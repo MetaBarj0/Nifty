@@ -5,12 +5,13 @@ import { ERC165 } from "./ERC165.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
+import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
-contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
+contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, IOwnable2Steps, ERC165 {
   address public immutable creator;
 
   mapping(uint256 => address) private tokenIdToOwner;
@@ -23,24 +24,28 @@ contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
 
   uint256[] private allTokens;
 
+  address private owner_;
+  address private pendingOwner_;
+
   constructor() {
     creator = msg.sender;
+    owner_ = msg.sender;
   }
 
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
     return interfaceId == type(INifty).interfaceId || super.supportsInterface(interfaceId);
   }
 
-  function balanceOf(address owner) external view returns (uint256) {
-    return balances[owner];
+  function balanceOf(address tokenOwner) external view returns (uint256) {
+    return balances[tokenOwner];
   }
 
   function ownerOf(uint256 tokenId) external view returns (address) {
-    address owner = tokenIdToOwner[tokenId];
+    address tokenOwner = tokenIdToOwner[tokenId];
 
-    require(owner != address(0), INifty.InvalidTokenId());
+    require(tokenOwner != address(0), INifty.InvalidTokenId());
 
-    return owner;
+    return tokenOwner;
   }
 
   function transferFrom(address, address, uint256) external payable {
@@ -84,14 +89,14 @@ contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
   }
 
   function getApproved(uint256 tokenId) external view returns (address) {
-    address owner = tokenIdToOwner[tokenId];
-    require(owner != address(0), InvalidTokenId());
+    address tokenOwner = tokenIdToOwner[tokenId];
+    require(tokenOwner != address(0), InvalidTokenId());
 
     return tokenIdToApproved[tokenId];
   }
 
-  function isApprovedForAll(address owner, address operator) external view returns (bool) {
-    return ownerToOperatorApproval[owner][operator];
+  function isApprovedForAll(address tokenOwner, address operator) external view returns (bool) {
+    return ownerToOperatorApproval[tokenOwner][operator];
   }
 
   function mint(address to, uint256 tokenId) external {
@@ -151,11 +156,11 @@ contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
     return allTokens[index];
   }
 
-  function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256) {
-    require(owner != address(0), InvalidTokenId());
-    require(index < balances[owner], IndexOutOfBound());
+  function tokenOfOwnerByIndex(address tokenOwner, uint256 index) external view returns (uint256) {
+    require(tokenOwner != address(0), InvalidTokenId());
+    require(index < balances[tokenOwner], IndexOutOfBound());
 
-    return ownerTokenIndexToTokenId[owner][index];
+    return ownerTokenIndexToTokenId[tokenOwner][index];
   }
 
   function tryReceive(address operator, address from, address to, uint256 tokenId, bytes memory data) private {
@@ -183,4 +188,31 @@ contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
   }
 
   function tokenURI(uint256 tokenId) external view override returns (string memory) { }
+
+  function owner() external view returns (address) {
+    return owner_;
+  }
+
+  function pendingOwner() external view returns (address) {
+    return pendingOwner_;
+  }
+
+  function transferOwnership(address newOwner) external {
+    require(owner_ == msg.sender, Unauthorized());
+
+    pendingOwner_ = newOwner;
+  }
+
+  function acceptOwnership() external {
+    require(msg.sender == pendingOwner_, Unauthorized());
+
+    owner_ = pendingOwner_;
+    pendingOwner_ = address(0);
+  }
+
+  function renounceOwnership() external override {
+    require(msg.sender == owner_ && address(0) == pendingOwner_, Unauthorized());
+
+    owner_ = address(0);
+  }
 }
