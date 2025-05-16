@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import { Nifty } from "../src/Nifty.sol";
+import { IERC721Enumerable } from "../src/interfaces/IERC721Enumerable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+
+import { Nifty } from "../src/Nifty.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
@@ -44,7 +46,7 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
 
   function test_tokenByIndex_throws_forIndexGreaterOrEqualThanTotalSupply() public {
     assertEq(nifty.totalSupply(), 0);
-    vm.expectRevert(INifty.IndexOutOfBound.selector);
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     nifty.tokenByIndex(0);
   }
 
@@ -68,12 +70,12 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
 
     assertEq(43, nifty.tokenByIndex(0));
 
-    vm.expectRevert(INifty.IndexOutOfBound.selector);
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     nifty.tokenByIndex(1);
   }
 
   function test_tokenOfOwnerByIndex_throws_forIndexGreaterOrEqualToOwnerBalance() public {
-    vm.expectRevert(INifty.IndexOutOfBound.selector);
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     nifty.tokenOfOwnerByIndex(alice, 0);
   }
 
