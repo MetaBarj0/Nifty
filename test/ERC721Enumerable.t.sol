@@ -4,10 +4,10 @@ pragma solidity 0.8.29;
 import { Nifty } from "../src/Nifty.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
 
-contract ERC721EnumerableTests is Test {
-  Nifty private nifty;
+contract ERC721EnumerableTests is Test, NiftyTestUtils {
   address private alice;
   address private bob;
   address private chuck;
@@ -24,14 +24,14 @@ contract ERC721EnumerableTests is Test {
   }
 
   function test_totalSupply_succeeds_atReturningMintedTokenAmount() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     assertEq(nifty.totalSupply(), 1);
   }
 
   function test_totalSupply_succeeds_atReturningMintedAndBurntTokenAmount() public {
-    nifty.mint(alice, 0);
-    nifty.mint(alice, 1);
+    paidMint(alice, 0);
+    paidMint(alice, 1);
     uint256 balanceBeforeBurn = nifty.balanceOf(alice);
 
     vm.startPrank(alice);
@@ -49,17 +49,17 @@ contract ERC721EnumerableTests is Test {
   }
 
   function test_tokenByIndex_succeeds_forMintedTokens() public {
-    nifty.mint(alice, 42);
-    nifty.mint(bob, 43);
+    paidMint(alice, 42);
+    paidMint(bob, 43);
 
     assertEq(42, nifty.tokenByIndex(0));
     assertEq(43, nifty.tokenByIndex(1));
   }
 
   function test_tokenByIndex_throws_forABurntTokenAtSpecifiedIndex() public {
-    nifty.mint(alice, 42);
-    nifty.mint(bob, 43);
-    nifty.mint(alice, 44);
+    paidMint(alice, 42);
+    paidMint(bob, 43);
+    paidMint(alice, 44);
 
     vm.startPrank(alice);
     nifty.burn(42);
@@ -83,10 +83,10 @@ contract ERC721EnumerableTests is Test {
   }
 
   function test_tokenOfOwnerByIndex_succeeds_forDifferentOwners() public {
-    nifty.mint(alice, 10);
-    nifty.mint(alice, 11);
-    nifty.mint(bob, 12);
-    nifty.mint(bob, 13);
+    paidMint(alice, 10);
+    paidMint(alice, 11);
+    paidMint(bob, 12);
+    paidMint(bob, 13);
 
     assertEq(10, nifty.tokenOfOwnerByIndex(alice, 0));
     assertEq(11, nifty.tokenOfOwnerByIndex(alice, 1));
@@ -95,15 +95,15 @@ contract ERC721EnumerableTests is Test {
   }
 
   function test_tokenOfOwnerByIndex_succeeds_forDifferentOwnersWhoBurn() public {
-    nifty.mint(alice, 10);
-    nifty.mint(alice, 11);
-    nifty.mint(alice, 12);
-    nifty.mint(bob, 13);
-    nifty.mint(bob, 14);
-    nifty.mint(bob, 15);
-    nifty.mint(chuck, 16);
-    nifty.mint(chuck, 17);
-    nifty.mint(chuck, 18);
+    paidMint(alice, 10);
+    paidMint(alice, 11);
+    paidMint(alice, 12);
+    paidMint(bob, 13);
+    paidMint(bob, 14);
+    paidMint(bob, 15);
+    paidMint(chuck, 16);
+    paidMint(chuck, 17);
+    paidMint(chuck, 18);
 
     vm.startPrank(alice);
     nifty.burn(10);
