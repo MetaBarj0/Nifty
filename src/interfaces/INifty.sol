@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { IERC721 } from "./IERC721.sol";
 
+// TODO: IMintable, IBurnable interfaces
+// TODO: spread errors in related interfaces when applicable
 interface INifty is IERC721 {
   /// @notice A specify INifty error
   /// @dev Specifically thrown at mint time if the provided token id has
@@ -39,6 +41,11 @@ interface INifty is IERC721 {
   /// @param to the faulty receiver address
   error InvalidReceiver(address to);
 
+  /// @notice A specific INifty error
+  /// @dev specifically thrown when mint function is called with a wrong
+  ///  amount of wei
+  error WrongPaymentValue();
+
   /// @notice A specific INifty mint feature
   /// @dev Using this function a user can mint a token for free. You can
   ///  disable it in implementation by throwing if you like.
@@ -47,7 +54,7 @@ interface INifty is IERC721 {
   /// @param to the user to mint token for. Cannot be 0 address.
   /// @param tokenId the identifier of the token to mint. A token with this
   ///  identifier must not already exist.
-  function mint(address to, uint256 tokenId) external;
+  function mint(address to, uint256 tokenId) external payable;
 
   /// @notice A specific INifty burn feature
   /// @dev Using this function a token owner can burn his owned previously

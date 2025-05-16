@@ -99,9 +99,10 @@ contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, IOwnable2Steps, ER
     return ownerToOperatorApproval[tokenOwner][operator];
   }
 
-  function mint(address to, uint256 tokenId) external {
+  function mint(address to, uint256 tokenId) external payable {
     require(to != address(0), InvalidAddress());
     require(tokenIdToOwner[tokenId] == address(0), TokenAlreadyMinted());
+    require(msg.value == 500 gwei, WrongPaymentValue());
 
     tokenIdToOwner[tokenId] = to;
 
