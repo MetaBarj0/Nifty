@@ -5,10 +5,12 @@ import { ERC165 } from "./ERC165.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
+
+import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
-contract Nifty is INifty, IERC721Enumerable, ERC165 {
+contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, ERC165 {
   address public immutable creator;
 
   mapping(uint256 => address) private tokenIdToOwner;
@@ -171,4 +173,14 @@ contract Nifty is INifty, IERC721Enumerable, ERC165 {
       }
     }
   }
+
+  function name() external pure override returns (string memory) {
+    return "Nifty";
+  }
+
+  function symbol() external pure override returns (string memory) {
+    return "NFT xD";
+  }
+
+  function tokenURI(uint256 tokenId) external view override returns (string memory) { }
 }
