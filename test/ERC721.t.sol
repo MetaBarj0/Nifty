@@ -5,10 +5,11 @@ import { Nifty } from "../src/Nifty.sol";
 
 import { IERC721 } from "../src/interfaces/IERC721.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
 
-contract ERC721Tests is Test {
-  Nifty private nifty;
+contract ERC721Tests is Test, NiftyTestUtils {
   address private alice;
   address private bob;
   address private chuck;
@@ -28,7 +29,7 @@ contract ERC721Tests is Test {
 
   function test_balanceOf_succeeds_returnsUserBalance() public {
     for (uint256 index = 0; index < 42; index++) {
-      nifty.mint(alice, index);
+      paidMint(alice, index);
     }
 
     assertEq(42, nifty.balanceOf(alice));
@@ -45,7 +46,7 @@ contract ERC721Tests is Test {
   }
 
   function test_approve_throws_ifSenderIsNotOwner() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(bob);
 
@@ -56,7 +57,7 @@ contract ERC721Tests is Test {
   }
 
   function test_approve_succeeds_ifSenderIsOwner() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
 
@@ -71,8 +72,8 @@ contract ERC721Tests is Test {
   }
 
   function test_setApprovalForAll_succeeds_andEmitApprovalForAll() public {
-    nifty.mint(alice, 0);
-    nifty.mint(alice, 1);
+    paidMint(alice, 0);
+    paidMint(alice, 1);
 
     vm.startPrank(alice);
 
@@ -96,7 +97,7 @@ contract ERC721Tests is Test {
   }
 
   function test_isApprovedForAll_succeeds_andProvesSeveralOperatorsSupportForOwner() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
 
@@ -118,7 +119,7 @@ contract ERC721Tests is Test {
   }
 
   function test_approve_throws_ifSenderIsNotOperator() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(bob);
 
@@ -129,7 +130,7 @@ contract ERC721Tests is Test {
   }
 
   function test_approve_succeeds_ifSenderisOperator() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     nifty.setApprovalForAll(chuck, true);
@@ -146,7 +147,7 @@ contract ERC721Tests is Test {
   }
 
   function test_transferFrom_throws_unsafeTransferFromIsUnsupported() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
 
@@ -157,7 +158,7 @@ contract ERC721Tests is Test {
   }
 
   function test_safeTransferFrom_throws_ifNotOwnerNorApprovedNorOperator() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(bob);
 
@@ -177,7 +178,7 @@ contract ERC721Tests is Test {
   }
 
   function test_safeTransferFrom_succeeds_ifOwner() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
 
@@ -193,7 +194,7 @@ contract ERC721Tests is Test {
   }
 
   function test_safeTransferFrom_succeeds_ifApproved() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     nifty.approve(bob, 0);
@@ -213,8 +214,8 @@ contract ERC721Tests is Test {
   }
 
   function test_safeTransferFrom_succeeds_ifOperator() public {
-    nifty.mint(alice, 0);
-    nifty.mint(alice, 1);
+    paidMint(alice, 0);
+    paidMint(alice, 1);
 
     vm.startPrank(alice);
     nifty.setApprovalForAll(bob, true);
@@ -240,7 +241,7 @@ contract ERC721Tests is Test {
   }
 
   function test_safeTransferFrom_succeeds_andResetApproval() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     nifty.approve(bob, 0);

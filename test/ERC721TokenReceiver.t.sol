@@ -9,10 +9,10 @@ import { InvalidReceiver } from "./InvalidReceiver.sol";
 import { NonCompliantReceiver } from "./NonCompliantReceiver.sol";
 import { ValidReceiver } from "./ValidReceiver.sol";
 
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
 
-contract ERC721TokenReceiverTests is Test {
-  Nifty private nifty;
+contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   address private alice;
   InvalidReceiver private invalidReceiver;
   FailingReceiver private failingReceiver;
@@ -30,21 +30,21 @@ contract ERC721TokenReceiverTests is Test {
 
   function test_mint_throws_withInvalidReceiverContract() public {
     vm.expectPartialRevert(INifty.InvalidReceiver.selector);
-    nifty.mint(address(invalidReceiver), 0);
+    paidMint(address(invalidReceiver), 0);
   }
 
   function test_mint_throws_withFailingReceiverContract() public {
     vm.expectRevert();
-    nifty.mint(address(failingReceiver), 0);
+    paidMint(address(failingReceiver), 0);
   }
 
   function test_mint_throws_withNonCompliantReceiverContract() public {
     vm.expectPartialRevert(INifty.InvalidReceiver.selector);
-    nifty.mint(address(nonCompliantReceiver), 0);
+    paidMint(address(nonCompliantReceiver), 0);
   }
 
   function test_safeTransferFrom_throws_withInvalidReceiverContract() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     vm.expectPartialRevert(INifty.InvalidReceiver.selector);
@@ -53,7 +53,7 @@ contract ERC721TokenReceiverTests is Test {
   }
 
   function test_safeTransferFrom_throws_withFailingReceiverContract() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     vm.expectRevert();
@@ -62,7 +62,7 @@ contract ERC721TokenReceiverTests is Test {
   }
 
   function test_safeTransferFrom_throws_withNonCompliantReceiverContract() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     vm.expectRevert();
@@ -73,13 +73,13 @@ contract ERC721TokenReceiverTests is Test {
   function test_mint_succeeds_WithValidReceiverContract() public {
     vm.expectEmit();
     emit ValidReceiver.Received(address(this), address(0), 0);
-    nifty.mint(address(validReceiver), 0);
+    paidMint(address(validReceiver), 0);
 
     assertEq(nifty.balanceOf(address(validReceiver)), 1);
   }
 
   function test_safeTransferFrom_succeeds_withValidReceiverContract() public {
-    nifty.mint(alice, 0);
+    paidMint(alice, 0);
 
     vm.startPrank(alice);
     vm.expectEmit();
