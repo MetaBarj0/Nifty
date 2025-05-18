@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import { ERC165 } from "./ERC165.sol";
-
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Burnable } from "./interfaces/IERC721Burnable.sol";
@@ -13,7 +11,18 @@ import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { INifty } from "./interfaces/INifty.sol";
 import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 
-contract Nifty is INifty, IERC721Enumerable, IERC721Metadata, IOwnable2Steps, IERC721Mintable, IERC721Burnable, ERC165 {
+import { ERC165 } from "./ERC165.sol";
+
+contract Nifty is
+  INifty,
+  IERC721,
+  IERC721Enumerable,
+  IERC721Metadata,
+  IOwnable2Steps,
+  IERC721Mintable,
+  IERC721Burnable,
+  ERC165
+{
   address public immutable creator;
 
   mapping(uint256 => address) private tokenIdToOwner;
