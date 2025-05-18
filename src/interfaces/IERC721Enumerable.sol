@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC721 } from "./IERC721.sol";
-
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 ///  Note: the ERC-165 identifier for this interface is 0x780e9d63.
-interface IERC721Enumerable is IERC721 {
+interface IERC721Enumerable {
   /// @notice A specific IERC721Enumerable error
   /// @dev Specifically thrown when using ERC721 enumerable features
   error IndexOutOfBound();

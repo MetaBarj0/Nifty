@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC721 } from "./IERC721.sol";
-
-// TODO: spread errors in related interfaces when applicable
-interface INifty is IERC721 {
+interface INifty {
   /// @notice A specific INifty error
   /// @dev Specifically thrown at ownership check
   error InvalidTokenId();
