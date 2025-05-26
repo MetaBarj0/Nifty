@@ -7,9 +7,9 @@ import { IERC721Burnable } from "./interfaces/IERC721Burnable.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721Mintable } from "./interfaces/IERC721Mintable.sol";
+import { IERC721Ownable2Steps } from "./interfaces/IERC721Ownable2Steps.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { INifty } from "./interfaces/INifty.sol";
-import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 
 import { ERC165 } from "./ERC165.sol";
 
@@ -18,7 +18,7 @@ contract Nifty is
   IERC721,
   IERC721Enumerable,
   IERC721Metadata,
-  IOwnable2Steps,
+  IERC721Ownable2Steps,
   IERC721Mintable,
   IERC721Burnable,
   ERC165
