@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IOwnable2Steps {
+interface IERC721Ownable2Steps {
   /// @notice Get the current owner of the contract implementation
   /// @dev Single owner, may be changed in 2 steps.
   function owner() external view returns (address);
