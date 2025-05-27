@@ -9,6 +9,7 @@ import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721Mintable } from "./interfaces/IERC721Mintable.sol";
 import { IERC721Ownable2Steps } from "./interfaces/IERC721Ownable2Steps.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
+import { IERC721Withdrawable } from "./interfaces/IERC721Withdrawable.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
 import { ERC165 } from "./ERC165.sol";
@@ -21,6 +22,7 @@ contract Nifty is
   IERC721Ownable2Steps,
   IERC721Mintable,
   IERC721Burnable,
+  IERC721Withdrawable,
   ERC165
 {
   address public immutable creator;
@@ -226,5 +228,13 @@ contract Nifty is
     require(msg.sender == owner_ && address(0) == pendingOwner_, Unauthorized());
 
     owner_ = address(0);
+  }
+
+  function withdraw() external {
+    require(msg.sender == owner_, Unauthorized());
+
+    (bool success,) = payable(owner_).call{ value: address(this).balance }("");
+
+    require(success, IERC721Withdrawable.TransferFailed());
   }
 }

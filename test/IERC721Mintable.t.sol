@@ -11,7 +11,6 @@ contract NiftyTests is Test, NiftyTestUtils {
   address private bob;
 
   function setUp() public {
-    nifty = new Nifty();
     bob = makeAddr("Bob");
   }
 
