@@ -20,7 +20,6 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   ValidReceiver private validReceiver;
 
   function setUp() public {
-    nifty = new Nifty();
     invalidReceiver = new InvalidReceiver();
     failingReceiver = new FailingReceiver();
     nonCompliantReceiver = new NonCompliantReceiver();
