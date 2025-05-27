@@ -16,7 +16,6 @@ contract ERC721Tests is Test, NiftyTestUtils {
   address private david;
 
   function setUp() public {
-    nifty = new Nifty();
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
     chuck = makeAddr("Chuck");
