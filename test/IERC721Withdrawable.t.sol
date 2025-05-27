@@ -4,8 +4,9 @@ pragma solidity 0.8.29;
 import { IERC721Withdrawable } from "../src/interfaces/IERC721Withdrawable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
+
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
 contract NiftyTests is Test, NiftyTestUtils {
   address private alice;
