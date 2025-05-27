@@ -6,8 +6,9 @@ import { INifty } from "../src/interfaces/INifty.sol";
 
 import { Nifty } from "../src/Nifty.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
+
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
 contract ERC721EnumerableTests is Test, NiftyTestUtils {
   address private alice;

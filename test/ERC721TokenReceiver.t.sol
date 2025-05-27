@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import { Nifty } from "../src/Nifty.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+
+import { Nifty } from "../src/Nifty.sol";
+
+import { Test } from "forge-std/Test.sol";
 
 import { FailingReceiver } from "./FailingReceiver.sol";
 import { InvalidReceiver } from "./InvalidReceiver.sol";
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { NonCompliantReceiver } from "./NonCompliantReceiver.sol";
 import { ValidReceiver } from "./ValidReceiver.sol";
-
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
-import { Test } from "forge-std/Test.sol";
 
 contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   address private alice;
@@ -33,7 +34,7 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   }
 
   function test_mint_throws_withFailingReceiverContract() public {
-    vm.expectRevert();
+    vm.expectRevert(FailingReceiver.OhShit.selector);
     paidMint(address(failingReceiver), 0);
   }
 

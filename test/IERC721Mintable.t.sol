@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import { Nifty } from "../src/Nifty.sol";
 import { IERC721Mintable } from "../src/interfaces/IERC721Mintable.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
+import { Nifty } from "../src/Nifty.sol";
+
 import { Test } from "forge-std/Test.sol";
+
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
 contract NiftyTests is Test, NiftyTestUtils {
   address private bob;

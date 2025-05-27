@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
+import { IERC721Metadata } from "../src/interfaces/IERC721Metadata.sol";
+
 import { Nifty } from "../src/Nifty.sol";
 
-import { IERC721Metadata } from "../src/interfaces/IERC721Metadata.sol";
 import { Test } from "forge-std/Test.sol";
 
-// TODO: NiftyTestUtils
-contract ERC721Tests is Test {
-  Nifty private nifty;
+import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
+contract ERC721Tests is Test, NiftyTestUtils {
   function setUp() public {
     nifty = new Nifty();
   }
