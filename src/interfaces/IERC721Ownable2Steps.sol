@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title present the interface to implement the ownable 2 steps pattern
 interface IERC721Ownable2Steps {
   /// @notice Get the current owner of the contract implementation
   /// @dev Single owner, may be changed in 2 steps.

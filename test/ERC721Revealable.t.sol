@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import { IERC165 } from "../src/interfaces/IERC165.sol";
+import { IERC721Mintable } from "../src/interfaces/IERC721Mintable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
 import { Nifty } from "../src/Nifty.sol";
@@ -10,13 +10,12 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract ERC165Tests is Test, NiftyTestUtils {
+contract ERC721RevealableTests is Test, NiftyTestUtils {
+  address private alice;
+
   function setUp() public {
     nifty = new Nifty();
-  }
 
-  function test_supports_interface() public view {
-    assertEq(nifty.supportsInterface(type(IERC165).interfaceId), true);
-    assertEq(nifty.supportsInterface(type(INifty).interfaceId), true);
+    alice = makeAddr("Alice");
   }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @dev Note: the ERC-165 identifier for this interface is 0x150b7a02.
+/// @title An interface to implement the withdraw pattern for a NFT
 interface IERC721Withdrawable {
   /// @notice specific error thrown if the low level ether transfer fails in a
   ///  withdraw function call
