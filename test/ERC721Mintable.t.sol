@@ -9,10 +9,12 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract NiftyTests is Test, NiftyTestUtils {
+contract ERC721MintableTests is Test, NiftyTestUtils {
   address private bob;
 
   function setUp() public {
+    nifty = new Nifty();
+
     bob = makeAddr("Bob");
   }
 

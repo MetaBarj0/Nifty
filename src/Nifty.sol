@@ -8,12 +8,14 @@ import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721Mintable } from "./interfaces/IERC721Mintable.sol";
 import { IERC721Ownable2Steps } from "./interfaces/IERC721Ownable2Steps.sol";
+import { IERC721Revealable } from "./interfaces/IERC721Revealable.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { IERC721Withdrawable } from "./interfaces/IERC721Withdrawable.sol";
 import { INifty } from "./interfaces/INifty.sol";
 
 import { ERC165 } from "./ERC165.sol";
 
+// TODO: @inheritdoc for all
 contract Nifty is
   INifty,
   IERC721,
@@ -23,6 +25,7 @@ contract Nifty is
   IERC721Mintable,
   IERC721Burnable,
   IERC721Withdrawable,
+  IERC721Revealable,
   ERC165
 {
   address public immutable creator;
@@ -201,7 +204,13 @@ contract Nifty is
     return "NFT xD";
   }
 
-  function tokenURI(uint256 tokenId) external view override returns (string memory) { }
+  function tokenURI(uint256 tokenId) external view override returns (string memory) {
+    address tokenOwner = tokenIdToOwner[tokenId];
+
+    require(tokenOwner != address(0), INifty.InvalidTokenId());
+
+    return tokenURIBeforeReveal(tokenId);
+  }
 
   function owner() external view returns (address) {
     return owner_;
@@ -237,4 +246,15 @@ contract Nifty is
 
     require(success, IERC721Withdrawable.TransferFailed());
   }
+
+  function tokenURIBeforeReveal(uint256 tokenId) public view returns (string memory) {
+    address tokenOwner = tokenIdToOwner[tokenId];
+
+    require(tokenOwner != address(0), INifty.InvalidTokenId());
+  }
+
+  function setupRevealProperties(uint256 baseURIHash, string memory allTokensURIBeforeReveal, uint256 revealTimeLock)
+    external
+    override
+  { }
 }
