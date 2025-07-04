@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title An interface for NFT burning feature
 interface IERC721Burnable {
   /// @notice A specific burn feature
   /// @dev Using this function a token owner can burn his owned previously

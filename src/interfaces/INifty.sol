@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title The minimal set of features to implement a INifty like token
 interface INifty {
   /// @notice A specific INifty error
   /// @dev Specifically thrown at ownership check

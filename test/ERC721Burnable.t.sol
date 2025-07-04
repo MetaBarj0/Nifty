@@ -10,11 +10,13 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract NiftyTests is Test, NiftyTestUtils {
+contract ERC721BurnableTests is Test, NiftyTestUtils {
   address private bob;
   address private alice;
 
   function setUp() public {
+    nifty = new Nifty();
+
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
   }

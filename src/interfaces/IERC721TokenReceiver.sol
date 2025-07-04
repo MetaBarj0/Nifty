@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Interface to implement the on receive token, kind of wallet
+///  interface
 /// @dev Note: the ERC-165 identifier for this interface is 0x150b7a02.
 interface IERC721TokenReceiver {
   /// @notice Handle the receipt of an NFT

@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract DeploymentTests is Test, NiftyTestUtils {
+contract ERC165Tests is Test, NiftyTestUtils {
   function setUp() public {
     nifty = new Nifty();
   }
