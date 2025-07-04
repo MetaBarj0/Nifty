@@ -4,15 +4,19 @@ pragma solidity 0.8.29;
 import { IERC721Withdrawable } from "../src/interfaces/IERC721Withdrawable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
+import { Nifty } from "../src/Nifty.sol";
+
 import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract NiftyTests is Test, NiftyTestUtils {
+contract ERC721WithdrwableTests is Test, NiftyTestUtils {
   address private alice;
   address private bob;
 
   function setUp() public {
+    nifty = new Nifty();
+
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
   }
