@@ -10,6 +10,7 @@ import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
 import { IERC721Mintable } from "./interfaces/IERC721Mintable.sol";
 import { IERC721Ownable2Steps } from "./interfaces/IERC721Ownable2Steps.sol";
+import { IERC721Pausable } from "./interfaces/IERC721Pausable.sol";
 import { IERC721Revealable } from "./interfaces/IERC721Revealable.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
 import { IERC721Withdrawable } from "./interfaces/IERC721Withdrawable.sol";
@@ -28,6 +29,7 @@ contract Nifty is
   IERC721Burnable,
   IERC721Withdrawable,
   IERC721Revealable,
+  IERC721Pausable,
   ERC165
 {
   address public immutable creator;
@@ -48,6 +50,8 @@ contract Nifty is
   string baseURI_;
   uint256 baseURICommitment_;
   uint256 revealTimeLockEnd_;
+
+  bool paused_;
 
   constructor() {
     creator = msg.sender;
@@ -122,6 +126,7 @@ contract Nifty is
   }
 
   function mint(address to, uint256 tokenId) external payable {
+    require(!paused_, MintAndBurnPaused());
     require(to != address(0), InvalidAddress());
     require(tokenIdToOwner[tokenId] == address(0), TokenAlreadyMinted());
     require(msg.value == 500 gwei, WrongPaymentValue());
@@ -142,6 +147,7 @@ contract Nifty is
   }
 
   function burn(uint256 tokenId) external {
+    require(!paused_, MintAndBurnPaused());
     address tokenOwner = tokenIdToOwner[tokenId];
     require(tokenOwner != address(0), InvalidTokenId());
     require(
@@ -283,5 +289,21 @@ contract Nifty is
 
     baseURICommitment_ = 0;
     baseURI_ = baseURI;
+  }
+
+  function pause() external {
+    require(msg.sender == owner_, INifty.Unauthorized());
+
+    paused_ = true;
+  }
+
+  function resume() external {
+    require(msg.sender == owner_, INifty.Unauthorized());
+
+    paused_ = false;
+  }
+
+  function paused() external view returns (bool) {
+    return paused_;
   }
 }
