@@ -167,6 +167,8 @@ contract Nifty is
 
     delete tokenIdToOwner[tokenId];
     balances[tokenOwner]--;
+
+    emit IERC721.Transfer(msg.sender, address(0), tokenId);
   }
 
   function totalSupply() public view returns (uint256) {

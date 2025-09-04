@@ -117,4 +117,16 @@ contract ERC721BurnableTests is Test, NiftyTestUtils {
     nifty.burn(0);
     vm.stopPrank();
   }
+
+  function test_burn_emitsTransferEvent_ifItSucceeds() public {
+    paidMint(alice, 3);
+
+    vm.startPrank(alice);
+
+    vm.expectEmit();
+    emit IERC721.Transfer(alice, address(0), 3);
+    nifty.burn(3);
+
+    vm.stopPrank();
+  }
 }
