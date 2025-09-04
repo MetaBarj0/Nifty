@@ -4,23 +4,40 @@ pragma solidity ^0.8.0;
 /// @title present the interface to implement the commit reveal token URI
 ///  pattern
 interface IERC721Revealable {
+  /// @notice A specific error regarding reveal properties
+  /// @dev see the setupRevealProperties function for more details
+  error InvalidRevealProperties();
+
+  /// @notice A specific error regarding reveal
+  /// @dev Thrown if the specified base URI in reveal call is incorrect
+  error WrongPreimage();
+
   /// @notice The facility to setup the reveal for tokens
   /// @dev Must throw if not called by owner
-  ///  Must throw if baseUriHash is empty
-  ///  Must throw if allTokensURIBeforeReveal is empty
+  ///  Must throw if baseUriHash argument is default value
+  ///  Must throw if allTokensURIBeforeReveal argument is empty
   ///  Must throw if revealTimeLock is before this block timestamp
-  /// @param baseURIHash the keccak256 hash of the final base URI for all
+  /// @param baseURICommitment the keccak256 hash of the final base URI for all
   ///   tokens
   /// @param allTokensURIBeforeReveal the URI for all tokens before the reveal
   /// @param revealTimeLock the amount of second that must pass before
   ///  considering the reveal as completed.
-  function setupRevealProperties(uint256 baseURIHash, string memory allTokensURIBeforeReveal, uint256 revealTimeLock)
-    external;
+  function commitRevealProperties(
+    uint256 baseURICommitment,
+    string calldata allTokensURIBeforeReveal,
+    uint256 revealTimeLock
+  ) external;
 
-  /// @notice Returns the token URI before the reveal date.
-  /// @dev Must throw if the token is not minted or has been burnt
-  ///  Must throw if setupRevealProperties has not been successfully called beforehand
-  /// @param tokenId a valid token id that is, already minted
-  /// @return The URI of the token before the reveal date
-  function tokenURIBeforeReveal(uint256 tokenId) external returns (string memory);
+  /// @notice Get the end of the reveal time lock
+  /// @dev Returns 0 if not set with a prior commitRevealProperties call
+  /// @return the time when all token URI can be revealed
+  function revealTimeLockEnd() external view returns (uint256);
+
+  /// @notice reveal the final base URI for all tokens of this NFT if all
+  ///  conditions are met.
+  /// @dev Must throw if not called by owner
+  ///  Must throw if the baseURI is incorrect (wrong preimage)
+  ///  An ahead of time reveal is permitted.
+  /// @param baseURI the final base URI for all tokens handled by this NFT.
+  function reveal(string calldata baseURI) external;
 }

@@ -32,11 +32,14 @@ contract ERC721MetadataTests is Test, NiftyTestUtils {
     nifty.tokenURI(0);
   }
 
-  function test_tokenURI_succeeds_returnsSameURIForAllTokensBeforeRevealDate() public {
+  function test_tokenURI_throws_forBurntToken() public {
     paidMint(alice, 0);
-    paidMint(alice, 42);
 
-    assertEq(nifty.tokenURI(0), nifty.tokenURIBeforeReveal(0));
-    assertEq(nifty.tokenURI(42), nifty.tokenURIBeforeReveal(42));
+    vm.startPrank(alice);
+    nifty.burn(0);
+    vm.stopPrank();
+
+    vm.expectRevert(INifty.InvalidTokenId.selector);
+    assertEq(nifty.tokenURI(0), "");
   }
 }
