@@ -89,6 +89,8 @@ contract ERC721Ownable2StepsTests is Test, NiftyTestUtils {
   function test_renounceOwnership_succeeds_ifOwnerAndNoPendingOwner() public {
     address oldOwner = nifty.owner();
 
+    nifty.transferOwnership(alice);
+    nifty.transferOwnership(address(0));
     nifty.renounceOwnership();
 
     assertEq(oldOwner, address(this));
