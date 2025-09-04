@@ -74,7 +74,7 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
 
   function test_mint_succeeds_WithValidReceiverContract() public {
     vm.expectEmit();
-    emit ValidReceiver.Received(address(this), address(0), 0);
+    emit ValidReceiver.Received(address(validReceiver), address(0), 0);
     paidMint(address(validReceiver), 0);
 
     assertEq(nifty.balanceOf(address(validReceiver)), 1);
