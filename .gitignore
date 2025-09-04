@@ -19,3 +19,6 @@ docs/
 
 # crashing processes
 core.*
+
+# foundry files
+foundry.lock

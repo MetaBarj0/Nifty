@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
 import { IERC721Burnable } from "./interfaces/IERC721Burnable.sol";
@@ -42,6 +44,10 @@ contract Nifty is
 
   address private owner_;
   address private pendingOwner_;
+
+  string baseURI_;
+  uint256 baseURICommitment_;
+  uint256 revealTimeLockEnd_;
 
   constructor() {
     creator = msg.sender;
@@ -209,7 +215,9 @@ contract Nifty is
 
     require(tokenOwner != address(0), INifty.InvalidTokenId());
 
-    return tokenURIBeforeReveal(tokenId);
+    return baseURICommitment_ != 0 || (baseURICommitment_ == 0 && bytes(baseURI_).length == 0)
+      ? baseURI_
+      : string.concat(baseURI_, "/", Strings.toString(tokenId), ".svg");
   }
 
   function owner() external view returns (address) {
@@ -247,14 +255,31 @@ contract Nifty is
     require(success, IERC721Withdrawable.TransferFailed());
   }
 
-  function tokenURIBeforeReveal(uint256 tokenId) public view returns (string memory) {
-    address tokenOwner = tokenIdToOwner[tokenId];
+  function commitRevealProperties(
+    uint256 baseURICommitment,
+    string calldata allTokensURIBeforeReveal,
+    uint256 revealTimeLock
+  ) external {
+    require(msg.sender == owner_, INifty.Unauthorized());
+    require(
+      baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0,
+      IERC721Revealable.InvalidRevealProperties()
+    );
 
-    require(tokenOwner != address(0), INifty.InvalidTokenId());
+    baseURI_ = allTokensURIBeforeReveal;
+    baseURICommitment_ = baseURICommitment;
+    revealTimeLockEnd_ = block.timestamp + revealTimeLock;
   }
 
-  function setupRevealProperties(uint256 baseURIHash, string memory allTokensURIBeforeReveal, uint256 revealTimeLock)
-    external
-    override
-  { }
+  function revealTimeLockEnd() external view returns (uint256) {
+    return revealTimeLockEnd_;
+  }
+
+  function reveal(string calldata baseURI) external {
+    require(msg.sender == owner_, INifty.Unauthorized());
+    require(baseURICommitment_ == uint256(keccak256(abi.encodePacked(baseURI))), IERC721Revealable.WrongPreimage());
+
+    baseURICommitment_ = 0;
+    baseURI_ = baseURI;
+  }
 }
