@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract ERC721WithdrwableTests is Test, NiftyTestUtils {
+contract ERC721WithdrawableTests is Test, NiftyTestUtils {
   address private alice;
   address private bob;
 
@@ -33,17 +33,90 @@ contract ERC721WithdrwableTests is Test, NiftyTestUtils {
   function test_withdraw_throws_ifPaymentFails() public {
     paidMint(alice, 0);
 
+    nifty.commitRevealProperties(uint256(keccak256("revealed/uri")), "unrevealed/uri", 1 days, 1 days);
+    skip(1 days);
+    nifty.reveal("revealed/uri");
+
+    skip(1 days);
+
     // There is no receive function in this testing contract
     vm.expectRevert(IERC721Withdrawable.TransferFailed.selector);
     nifty.withdraw();
   }
 
-  function test_withdraw_succeeds_ifCalledByOwner() public {
+  function test_withdraw_throws_ifCommitRevealPropertiesHasNotBeenDone() public {
+    // transfers ownership from this test contract to bob
+    nifty.transferOwnership(bob);
+
+    vm.startPrank(bob);
+    nifty.acceptOwnership();
+
+    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    nifty.withdraw();
+
+    vm.stopPrank();
+  }
+
+  function test_withdraw_throws_ifRevealedIsNotDone() public {
+    nifty.commitRevealProperties(1234, "unrevealed/uri", 1 days, 1 days);
+
+    nifty.transferOwnership(bob);
+
+    vm.startPrank(bob);
+
+    nifty.acceptOwnership();
+
+    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    nifty.withdraw();
+
+    vm.stopPrank();
+  }
+
+  function test_withdraw_throws_ifRevealedButWithdrawIsStillLocked() public {
+    nifty.commitRevealProperties(uint256(keccak256("revealed/uri")), "unrevealed/uri", 1 days, 2 days);
+    skip(1 days);
+    nifty.reveal("revealed/uri");
+
+    nifty.transferOwnership(bob);
+
+    vm.startPrank(bob);
+
+    nifty.acceptOwnership();
+
+    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    nifty.withdraw();
+
+    vm.stopPrank();
+  }
+
+  function test_withdraw_throws_ifWithdrawTimelockEndedButRevealIsNotDone() public {
+    nifty.commitRevealProperties(uint256(keccak256("revealed/uri")), "unrevealed/uri", 1 days, 2 days);
+    skip(1 days);
+
+    nifty.transferOwnership(bob);
+
+    skip(2 days);
+
+    vm.startPrank(bob);
+
+    nifty.acceptOwnership();
+
+    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    nifty.withdraw();
+
+    vm.stopPrank();
+  }
+
+  function test_withdraw_succeeds_ifCalledByOwnerAndWithdrawIsUnlocked() public {
     uint256 revenuesInContractBeforeMint = address(nifty).balance;
 
     paidMint(alice, 0);
     paidMint(alice, 1);
     paidMint(alice, 2);
+
+    nifty.commitRevealProperties(uint256(keccak256("revealed/uri")), "unrevealed/uri", 1 days, 2 days);
+    skip(1 days);
+    nifty.reveal("revealed/uri");
 
     // transfers ownership from this test contract to bob
     nifty.transferOwnership(bob);
@@ -52,6 +125,8 @@ contract ERC721WithdrwableTests is Test, NiftyTestUtils {
     vm.stopPrank();
 
     uint256 revenuesInContractAfterMint = address(nifty).balance;
+
+    skip(2 days);
 
     vm.startPrank(bob);
     nifty.withdraw();
