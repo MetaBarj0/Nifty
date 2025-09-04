@@ -50,6 +50,7 @@ contract Nifty is
   string baseURI_;
   uint256 baseURICommitment_;
   uint256 revealTimeLockEnd_;
+  uint256 withdrawTimeLockEnd_;
 
   bool paused_;
 
@@ -257,6 +258,10 @@ contract Nifty is
 
   function withdraw() external {
     require(msg.sender == owner_, Unauthorized());
+    require(
+      bytes(baseURI_).length != 0 && baseURICommitment_ == 0 && block.timestamp >= withdrawTimeLockEnd_,
+      IERC721Withdrawable.WithdrawLocked()
+    );
 
     (bool success,) = payable(owner_).call{ value: address(this).balance }("");
 
@@ -266,17 +271,20 @@ contract Nifty is
   function commitRevealProperties(
     uint256 baseURICommitment,
     string calldata allTokensURIBeforeReveal,
-    uint256 revealTimeLock
+    uint256 revealTimeLock,
+    uint256 withdrawTimeLockAferReveal
   ) external {
     require(msg.sender == owner_, INifty.Unauthorized());
     require(
-      baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0,
+      baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0
+        && withdrawTimeLockAferReveal > 0,
       IERC721Revealable.InvalidRevealProperties()
     );
 
     baseURI_ = allTokensURIBeforeReveal;
     baseURICommitment_ = baseURICommitment;
     revealTimeLockEnd_ = block.timestamp + revealTimeLock;
+    withdrawTimeLockEnd_ = block.timestamp + revealTimeLock + withdrawTimeLockAferReveal;
   }
 
   function revealTimeLockEnd() external view returns (uint256) {
@@ -305,5 +313,9 @@ contract Nifty is
 
   function paused() external view returns (bool) {
     return paused_;
+  }
+
+  function withdrawTimeLockEnd() external view returns (uint256) {
+    return withdrawTimeLockEnd_;
   }
 }
