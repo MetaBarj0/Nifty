@@ -89,7 +89,7 @@ contract ERC721RevealableTests is Test, NiftyTestUtils {
 
     nifty.reveal("correct/base/address");
 
-    assertEq(nifty.tokenURI(0), "correct/base/address/0.svg");
+    assertEq(nifty.tokenURI(0), "correct/base/address/0.json");
   }
 
   function test_allTimeLocks_return0_whenCommitRevealPropertiesHasNotBeenCalled() public view {
