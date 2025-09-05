@@ -83,9 +83,10 @@ contract Nifty is
     require(to != address(0), INifty.ZeroAddress());
 
     address tokenOwner = tokenIdToOwner[tokenId];
+    require(tokenOwner != address(0), INifty.InvalidTokenId());
+
     address approved = tokenIdToApproved[tokenId];
     bool isOperator = ownerToOperatorApproval[tokenOwner][msg.sender];
-
     require(from == tokenOwner && (msg.sender == tokenOwner || msg.sender == approved || isOperator), Unauthorized());
 
     balances[from]--;

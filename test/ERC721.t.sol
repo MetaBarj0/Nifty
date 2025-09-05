@@ -170,12 +170,6 @@ contract ERC721Tests is Test, NiftyTestUtils {
     vm.expectRevert(INifty.Unauthorized.selector);
     nifty.safeTransferFrom(alice, chuck, 0);
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.safeTransferFrom(bob, chuck, 1);
-
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.safeTransferFrom(alice, chuck, 1);
-
     vm.stopPrank();
   }
 
@@ -199,6 +193,11 @@ contract ERC721Tests is Test, NiftyTestUtils {
     nifty.safeTransferFrom(alice, address(0), 1);
 
     vm.stopPrank();
+  }
+
+  function test_safeTransferFrom_throws_ifTokenIsInvalid() public {
+    vm.expectRevert(INifty.InvalidTokenId.selector);
+    nifty.safeTransferFrom(alice, bob, 0);
   }
 
   function test_safeTransferFrom_succeeds_ifOwner() public {
