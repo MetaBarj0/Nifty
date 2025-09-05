@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29; // TODO: upgrade solidity compiler version
+pragma solidity 0.8.30; // TODO: upgrade solidity compiler version
 
 import { IERC721Pausable } from "../src/interfaces/IERC721Pausable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";

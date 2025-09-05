@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity 0.8.30;
 
 import { IERC721Withdrawable } from "../src/interfaces/IERC721Withdrawable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
