@@ -18,6 +18,10 @@ interface INifty {
   error Unsupported();
 
   /// @notice A specific INifty error
+  /// @dev Specifically thrown when transfering to 0 address
+  error ZeroAddress();
+
+  /// @notice A specific INifty error
   /// @dev specifically thrown in a safeTransferFrom call that fail to call a
   ///  compliant onERC721Received function as defined in the
   ///  IERC721TokenReceiver interface
