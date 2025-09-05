@@ -84,7 +84,7 @@ contract Nifty is
     address approved = tokenIdToApproved[tokenId];
     bool isOperator = ownerToOperatorApproval[tokenOwner][msg.sender];
 
-    require(msg.sender == tokenOwner || msg.sender == approved || isOperator, Unauthorized());
+    require(from == tokenOwner && (msg.sender == tokenOwner || msg.sender == approved || isOperator), Unauthorized());
 
     balances[from]--;
     balances[to]++;
