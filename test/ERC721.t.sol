@@ -179,6 +179,17 @@ contract ERC721Tests is Test, NiftyTestUtils {
     vm.stopPrank();
   }
 
+  function test_safeTransferFrom_throws_ifFromIsNotTheCurrentOwner() public {
+    paidMint(alice, 1);
+
+    vm.startPrank(alice);
+
+    vm.expectRevert(INifty.Unauthorized.selector);
+    nifty.safeTransferFrom(bob, chuck, 1);
+
+    vm.stopPrank();
+  }
+
   function test_safeTransferFrom_succeeds_ifOwner() public {
     paidMint(alice, 0);
 
