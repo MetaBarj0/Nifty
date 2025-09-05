@@ -3,8 +3,10 @@ MAKEFILE_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 include $(MAKEFILE_DIR)/.env
 
 $(MAKEFILE_DIR)/.env:
-	@cd $(MAKEFILE_DIR) && cp .env.sample .env
+	@cd $(MAKEFILE_DIR) && cp .env.sample .env \
+		&& echo .env file created, ready to hold your precious and secret variable values.
 
+.PHONY: build
 build:
 	@cd $(MAKEFILE_DIR) \
 		&& git submodule update --init --recursive \
@@ -14,25 +16,32 @@ build:
 test:
 	@cd $(MAKEFILE_DIR) && forge test --gas-report
 
+.PHONY: testv
 testv:
 	@cd $(MAKEFILE_DIR) && forge test -vvv
 
+.PHONY: watch
 watch:
 	@cd $(MAKEFILE_DIR) && forge test -w
 
+.PHONY: watchv
 watchv:
 	@cd $(MAKEFILE_DIR) && forge test -w -vvv
 
+.PHONY: coverage
 coverage:
 	@cd $(MAKEFILE_DIR) && forge coverage
 
+.PHONY: run_local_blockchain
 run_local_blockchain: .anvil.pid
 	@cd $(MAKEFILE_DIR) && [ -z "$$(pidof anvil)" ] && rm .anvil.pid && $(MAKE) .anvil.pid || return 0
 	@cd $(MAKEFILE_DIR) && echo $$(pidof anvil) > .anvil.pid
 
+.PHONY: kill_local_blockchain
 kill_local_blockchain:
 	@cd $(MAKEFILE_DIR) && [ -f .anvil.pid ] && kill "$$(cat .anvil.pid)" && rm .anvil.pid || echo "nothing to kill"
 
+.PHONY: local_deploy
 local_deploy: run_local_blockchain
 	@cd $(MAKEFILE_DIR) \
 		&& while true; do \
@@ -42,6 +51,7 @@ local_deploy: run_local_blockchain
 		  --broadcast \
 		&& break || sleep 1; done
 
+.PHONY: run
 run: script=
 run: build
 	@cd $(MAKEFILE_DIR) && [ -z "$${script}" ] \
@@ -71,6 +81,7 @@ run: build
 			& echo $$!>.anvil.pid || \
 		echo $$(pidof anvil) > .anvil.pid
 
+.PHONY: sepolia_deploy
 sepolia_deploy:
 	cd $(MAKEFILE_DIR) && forge script script/SepoliaDeploy.s.sol --rpc-url sepolia --broadcast --verify
 
