@@ -29,8 +29,10 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
 
   function test_totalSupply_succeeds_atReturningMintedTokenAmount() public {
     paidMint(alice, 0);
+    paidMint(bob, 1);
+    paidMint(chuck, 2);
 
-    assertEq(nifty.totalSupply(), 1);
+    assertEq(nifty.totalSupply(), 3);
   }
 
   function test_totalSupply_succeeds_atReturningMintedAndBurntTokenAmount() public {
