@@ -52,6 +52,10 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
     assertEq(nifty.totalSupply(), 0);
     vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     nifty.tokenByIndex(0);
+
+    paidMint(alice, 0);
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
+    nifty.tokenByIndex(1);
   }
 
   function test_tokenByIndex_succeeds_forMintedTokens() public {
