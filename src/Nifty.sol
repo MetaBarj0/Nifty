@@ -229,7 +229,7 @@ contract Nifty is
 
     return baseURICommitment_ != 0 || (baseURICommitment_ == 0 && bytes(baseURI_).length == 0)
       ? baseURI_
-      : string.concat(baseURI_, "/", Strings.toString(tokenId), ".svg");
+      : string.concat(baseURI_, "/", Strings.toString(tokenId), ".json");
   }
 
   function owner() external view returns (address) {
