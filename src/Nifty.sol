@@ -80,6 +80,8 @@ contract Nifty is
   }
 
   function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public payable {
+    require(to != address(0), INifty.ZeroAddress());
+
     address tokenOwner = tokenIdToOwner[tokenId];
     address approved = tokenIdToApproved[tokenId];
     bool isOperator = ownerToOperatorApproval[tokenOwner][msg.sender];
