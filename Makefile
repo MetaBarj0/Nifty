@@ -45,7 +45,7 @@ kill_local_blockchain:
 local_deploy: run_local_blockchain
 	@cd $(MAKEFILE_DIR) \
 		&& while true; do \
-		forge script script/LocalDeploy.s.sol \
+		forge script script/NiftyLocalDeploy.s.sol \
 		  --private-key '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' \
 		  --rpc-url local \
 		  --broadcast \
@@ -83,5 +83,5 @@ run: build
 
 .PHONY: sepolia_deploy
 sepolia_deploy:
-	cd $(MAKEFILE_DIR) && forge script script/SepoliaDeploy.s.sol --rpc-url sepolia --broadcast --verify
+	cd $(MAKEFILE_DIR) && forge script script/NiftySepoliaDeploy.s.sol --rpc-url sepolia --broadcast --verify
 
