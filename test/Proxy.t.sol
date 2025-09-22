@@ -1,0 +1,112 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.30;
+
+import { Proxy } from "../src/Proxy.sol";
+import { ITransparentUpgradeableProxy } from "../src/interfaces/ITransparentUpgradeableProxy.sol";
+
+import { TestImplementation } from "./TestImplementation.sol";
+import { Test } from "forge-std/Test.sol";
+
+contract ProxyTests is Test {
+  TestImplementation implementation;
+  ITransparentUpgradeableProxy proxy;
+
+  address alice;
+
+  function setUp() public {
+    implementation = new TestImplementation(42);
+
+    alice = makeAddr("alice");
+  }
+
+  function test_constructor_throws_withInvalidImplementation() public {
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+
+    new Proxy(address(0));
+  }
+
+  function test_constructor_initializesAdminAndImplementation_forAdminAccess() public {
+    proxy = new Proxy(address(implementation));
+
+    assertEq(address(this), proxy.admin());
+    assertEq(address(implementation), proxy.implementation());
+  }
+
+  function test_admin_returnsActualAdmin_ifAdmin() public {
+    proxy = new Proxy(address(implementation));
+
+    assertEq(address(this), proxy.admin());
+  }
+
+  function test_implementation_returnsActualImplementation_ifAdmin() public {
+    proxy = new Proxy(address(implementation));
+
+    assertEq(address(implementation), proxy.implementation());
+  }
+
+  function test_receive_throws_asUnsupported() public {
+    proxy = new Proxy(address(implementation));
+    vm.deal(alice, 500 gwei);
+
+    vm.startPrank(alice);
+
+    (bool success, bytes memory data) = address(proxy).call{ value: 500 gwei }("");
+
+    assertFalse(success);
+    assertEq(ITransparentUpgradeableProxy.ReceiveUnsupported.selector, bytes4(data));
+
+    vm.stopPrank();
+  }
+
+  function test_callforward_throughFallback_ifNotAdmin() public {
+    proxy = new Proxy(address(implementation));
+
+    vm.startPrank(alice);
+
+    (bool successAdminCall, bytes memory dataAdminCall) = address(proxy).call(abi.encodeWithSignature("admin()"));
+    (bool successImplementationCall, bytes memory dataImplementationCall) =
+      address(proxy).call(abi.encodeWithSignature("implementation()"));
+
+    vm.stopPrank();
+
+    assertTrue(successAdminCall);
+    assertTrue(successImplementationCall);
+    assertEq(abi.decode(dataAdminCall, (string)), "admin from implementation");
+    assertEq(abi.decode(dataImplementationCall, (string)), "implementation from implementation");
+  }
+
+  function test_callForward_throwsForUnexistingFunction_forNotAdmin() public {
+    proxy = new Proxy(address(implementation));
+
+    vm.startPrank(alice);
+    (bool success,) = address(proxy).call(abi.encodeWithSignature("bar()"));
+    vm.stopPrank();
+
+    assertFalse(success);
+  }
+
+  function test_callForward_throws_forAdmin() public {
+    proxy = new Proxy(address(implementation));
+    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("foo()"));
+
+    assertFalse(success);
+    assertEq(ITransparentUpgradeableProxy.InvalidAdminCall.selector, bytes4(data));
+  }
+
+  function test_stateChangesOccurInProxyStorage_forNotAdminCalls() public {
+    proxy = new Proxy(address(implementation));
+
+    vm.startPrank(alice);
+
+    (bool success,) = address(proxy).call(abi.encodeWithSignature("inc()"));
+    (, bytes memory data) = address(proxy).call(abi.encodeWithSignature("foo()"));
+
+    vm.stopPrank();
+
+    assertTrue(success);
+    assertEq(address(this), proxy.admin());
+    assertEq(address(implementation), proxy.implementation());
+    assertEq(42, implementation.foo());
+    assertEq(1, abi.decode(data, (uint256)));
+  }
+}
