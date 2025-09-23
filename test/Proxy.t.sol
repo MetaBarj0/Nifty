@@ -35,13 +35,19 @@ contract ProxyTests is Test {
   function test_admin_returnsActualAdmin_ifAdmin() public {
     proxy = new Proxy(address(implementation));
 
-    assertEq(address(this), proxy.admin());
+    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
+
+    assertTrue(success);
+    assertEq(address(this), abi.decode(data, (address)));
   }
 
   function test_implementation_returnsActualImplementation_ifAdmin() public {
     proxy = new Proxy(address(implementation));
 
-    assertEq(address(implementation), proxy.implementation());
+    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("implementation()"));
+
+    assertTrue(success);
+    assertEq(address(implementation), abi.decode(data, (address)));
   }
 
   function test_receive_throws_asUnsupported() public {
