@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import { ProxyStorage } from "./ProxyStorage.sol";
+import { ERC165 } from "../src/ERC165.sol";
+import { IInitializable } from "../src/interfaces/IInitializable.sol";
 
 import { ProxyStorage } from "./ProxyStorage.sol";
 import { ITransparentUpgradeableProxy } from "./interfaces/ITransparentUpgradeableProxy.sol";
@@ -11,8 +12,18 @@ contract Proxy is ITransparentUpgradeableProxy {
 
   address private immutable admin_;
 
-  constructor(address implementationContract) {
+  constructor(address implementationContract, bytes memory data) {
     require(implementationContract.code.length > 0, InvalidImplementation());
+
+    (bool success, bytes memory r) = implementationContract.call(
+      abi.encodeWithSignature("supportsInterface(bytes4)", type(IInitializable).interfaceId)
+    );
+
+    require(success && abi.decode(r, (bool)), InvalidImplementation());
+
+    (bool success2,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
+
+    require(success2, InvalidImplementation());
 
     ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = implementationContract;
     admin_ = msg.sender;
