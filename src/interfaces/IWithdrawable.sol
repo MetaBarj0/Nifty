@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title An interface to implement the withdraw pattern for a NFT
-interface IERC721Withdrawable {
+interface IWithdrawable {
   /// @notice specific error thrown if the low level ether transfer fails in a
   ///  withdraw function call
   error TransferFailed();

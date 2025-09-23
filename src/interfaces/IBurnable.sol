@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title An interface for NFT burning feature
-interface IERC721Burnable {
+interface IBurnable {
   /// @notice A specific burn feature
   /// @dev Using this function a token owner can burn his owned previously
   ///  minted tokens. You can disable it in implementation by throwing if you

@@ -5,7 +5,7 @@ libs = ["lib"]
 solc_version = "0.8.30"
 evm_version = "cancun"
 remappings = ["@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"]
-gas_reports = ["Nifty"]
+gas_reports = ["Nifty", "Proxy"]
 optimizer = true
 optimizer_runs = 999999
 via_ir = false

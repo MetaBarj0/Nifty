@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /// @title present the interface to implement the commit reveal token URI
 ///  pattern
-interface IERC721Revealable {
+interface IRevealable {
   /// @notice A specific error regarding reveal properties
   /// @dev see the setupRevealProperties function for more details
   error InvalidRevealProperties();
