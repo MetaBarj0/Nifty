@@ -52,16 +52,11 @@ contract ProxyTests is Test {
 
   function test_receive_throws_asUnsupported() public {
     proxy = new Proxy(address(implementation));
-    vm.deal(alice, 500 gwei);
-
-    vm.startPrank(alice);
 
     (bool success, bytes memory data) = address(proxy).call{ value: 500 gwei }("");
 
     assertFalse(success);
     assertEq(ITransparentUpgradeableProxy.ReceiveUnsupported.selector, bytes4(data));
-
-    vm.stopPrank();
   }
 
   function test_callforward_throughFallback_ifNotAdmin() public {
