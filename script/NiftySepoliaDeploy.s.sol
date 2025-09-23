@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import { Nifty } from "../src/Nifty.sol";
 
-import { Script, console } from "forge-std/Script.sol";
+import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
 contract SepoliaDeployScript is Script {

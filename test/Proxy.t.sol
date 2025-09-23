@@ -4,6 +4,8 @@ pragma solidity 0.8.30;
 import { Proxy } from "../src/Proxy.sol";
 import { ITransparentUpgradeableProxy } from "../src/interfaces/ITransparentUpgradeableProxy.sol";
 
+import { FailingInitializableImplementation } from "./FailingInitializableImplementation.sol";
+import { NotInitializableImplementation } from "./NotInitializableImplementation.sol";
 import { TestImplementation } from "./TestImplementation.sol";
 import { Test } from "forge-std/Test.sol";
 
@@ -14,27 +16,40 @@ contract ProxyTests is Test {
   address alice;
 
   function setUp() public {
-    implementation = new TestImplementation(42);
+    implementation = new TestImplementation();
+    proxy = new Proxy(address(implementation), abi.encode(42));
 
     alice = makeAddr("alice");
   }
 
-  function test_constructor_throws_withInvalidImplementation() public {
+  function test_constructor_throws_withZeroImplementation() public {
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
 
-    new Proxy(address(0));
+    new Proxy(address(0), "");
+  }
+
+  function test_constructor_throws_withNotInitializableImplementation() public {
+    NotInitializableImplementation notInitializableImplementation = new NotInitializableImplementation();
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+
+    new Proxy(address(notInitializableImplementation), "");
+  }
+
+  function test_constructor_throws_withFailingInitializableImplementation() public {
+    FailingInitializableImplementation failingInitializableImplementation = new FailingInitializableImplementation();
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+
+    new Proxy(address(failingInitializableImplementation), "");
   }
 
   function test_constructor_initializesAdminAndImplementation_forAdminAccess() public {
-    proxy = new Proxy(address(implementation));
-
     assertEq(address(this), proxy.admin());
     assertEq(address(implementation), proxy.implementation());
   }
 
   function test_admin_returnsActualAdmin_ifAdmin() public {
-    proxy = new Proxy(address(implementation));
-
     (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
 
     assertTrue(success);
@@ -42,8 +57,6 @@ contract ProxyTests is Test {
   }
 
   function test_implementation_returnsActualImplementation_ifAdmin() public {
-    proxy = new Proxy(address(implementation));
-
     (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("implementation()"));
 
     assertTrue(success);
@@ -51,8 +64,6 @@ contract ProxyTests is Test {
   }
 
   function test_receive_throws_asUnsupported() public {
-    proxy = new Proxy(address(implementation));
-
     (bool success, bytes memory data) = address(proxy).call{ value: 500 gwei }("");
 
     assertFalse(success);
@@ -60,8 +71,6 @@ contract ProxyTests is Test {
   }
 
   function test_callforward_throughFallback_ifNotAdmin() public {
-    proxy = new Proxy(address(implementation));
-
     vm.startPrank(alice);
 
     (bool successAdminCall, bytes memory dataAdminCall) = address(proxy).call(abi.encodeWithSignature("admin()"));
@@ -77,8 +86,6 @@ contract ProxyTests is Test {
   }
 
   function test_callForward_throwsForUnexistingFunction_forNotAdmin() public {
-    proxy = new Proxy(address(implementation));
-
     vm.startPrank(alice);
     (bool success,) = address(proxy).call(abi.encodeWithSignature("bar()"));
     vm.stopPrank();
@@ -87,7 +94,6 @@ contract ProxyTests is Test {
   }
 
   function test_callForward_throws_forAdmin() public {
-    proxy = new Proxy(address(implementation));
     (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("foo()"));
 
     assertFalse(success);
@@ -95,8 +101,6 @@ contract ProxyTests is Test {
   }
 
   function test_stateChangesOccurInProxyStorage_forNotAdminCalls() public {
-    proxy = new Proxy(address(implementation));
-
     vm.startPrank(alice);
 
     (bool success,) = address(proxy).call(abi.encodeWithSignature("inc()"));
@@ -107,7 +111,7 @@ contract ProxyTests is Test {
     assertTrue(success);
     assertEq(address(this), proxy.admin());
     assertEq(address(implementation), proxy.implementation());
-    assertEq(42, implementation.foo());
-    assertEq(1, abi.decode(data, (uint256)));
+    assertEq(0, implementation.foo());
+    assertEq(43, abi.decode(data, (uint256)));
   }
 }
