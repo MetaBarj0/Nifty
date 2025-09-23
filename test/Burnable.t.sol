@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract ERC721BurnableTests is Test, NiftyTestUtils {
+contract BurnableTests is Test, NiftyTestUtils {
   address private bob;
   address private alice;
 

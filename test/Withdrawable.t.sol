@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IERC721Withdrawable } from "../src/interfaces/IERC721Withdrawable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+import { IWithdrawable } from "../src/interfaces/IWithdrawable.sol";
 
 import { Nifty } from "../src/Nifty.sol";
 
@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract ERC721WithdrawableTests is Test, NiftyTestUtils {
+contract WithdrawableTests is Test, NiftyTestUtils {
   address private alice;
   address private bob;
 
@@ -40,7 +40,7 @@ contract ERC721WithdrawableTests is Test, NiftyTestUtils {
     skip(1 days);
 
     // There is no receive function in this testing contract
-    vm.expectRevert(IERC721Withdrawable.TransferFailed.selector);
+    vm.expectRevert(IWithdrawable.TransferFailed.selector);
     nifty.withdraw();
   }
 
@@ -51,7 +51,7 @@ contract ERC721WithdrawableTests is Test, NiftyTestUtils {
     vm.startPrank(bob);
     nifty.acceptOwnership();
 
-    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    vm.expectRevert(IWithdrawable.WithdrawLocked.selector);
     nifty.withdraw();
 
     vm.stopPrank();
@@ -66,7 +66,7 @@ contract ERC721WithdrawableTests is Test, NiftyTestUtils {
 
     nifty.acceptOwnership();
 
-    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    vm.expectRevert(IWithdrawable.WithdrawLocked.selector);
     nifty.withdraw();
 
     vm.stopPrank();
@@ -83,7 +83,7 @@ contract ERC721WithdrawableTests is Test, NiftyTestUtils {
 
     nifty.acceptOwnership();
 
-    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    vm.expectRevert(IWithdrawable.WithdrawLocked.selector);
     nifty.withdraw();
 
     vm.stopPrank();
@@ -101,7 +101,7 @@ contract ERC721WithdrawableTests is Test, NiftyTestUtils {
 
     nifty.acceptOwnership();
 
-    vm.expectRevert(IERC721Withdrawable.WithdrawLocked.selector);
+    vm.expectRevert(IWithdrawable.WithdrawLocked.selector);
     nifty.withdraw();
 
     vm.stopPrank();

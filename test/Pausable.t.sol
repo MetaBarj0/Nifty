@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30; // TODO: upgrade solidity compiler version
 
-import { IERC721Pausable } from "../src/interfaces/IERC721Pausable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+import { IPausable } from "../src/interfaces/IPausable.sol";
 
 import { Nifty } from "../src/Nifty.sol";
 
@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 
-contract ERC721PausableTests is Test, NiftyTestUtils {
+contract PausableTests is Test, NiftyTestUtils {
   address private alice;
 
   function setUp() public {
@@ -50,12 +50,12 @@ contract ERC721PausableTests is Test, NiftyTestUtils {
   function test_pause_locksMintAndBurn() public {
     nifty.pause();
 
-    vm.expectRevert(IERC721Pausable.MintAndBurnPaused.selector);
+    vm.expectRevert(IPausable.MintAndBurnPaused.selector);
     paidMint(alice, 123);
 
     vm.startPrank(alice);
 
-    vm.expectRevert(IERC721Pausable.MintAndBurnPaused.selector);
+    vm.expectRevert(IPausable.MintAndBurnPaused.selector);
     nifty.burn(0);
 
     vm.stopPrank();

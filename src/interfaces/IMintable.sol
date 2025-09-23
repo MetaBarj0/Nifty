@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title An interface for NFT minting feature
-interface IERC721Mintable {
+interface IMintable {
   /// @notice A specific IERC721Mintable error
   /// @dev specifically thrown when mint function is called with a wrong
   ///  amount of wei

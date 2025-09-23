@@ -3,18 +3,19 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+import { IBurnable } from "./interfaces/IBurnable.sol";
 import { IERC165 } from "./interfaces/IERC165.sol";
 import { IERC721 } from "./interfaces/IERC721.sol";
-import { IERC721Burnable } from "./interfaces/IERC721Burnable.sol";
 import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
-import { IERC721Mintable } from "./interfaces/IERC721Mintable.sol";
-import { IERC721Ownable2Steps } from "./interfaces/IERC721Ownable2Steps.sol";
-import { IERC721Pausable } from "./interfaces/IERC721Pausable.sol";
-import { IERC721Revealable } from "./interfaces/IERC721Revealable.sol";
 import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
-import { IERC721Withdrawable } from "./interfaces/IERC721Withdrawable.sol";
+import { IMintable } from "./interfaces/IMintable.sol";
+
 import { INifty } from "./interfaces/INifty.sol";
+import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
+import { IPausable } from "./interfaces/IPausable.sol";
+import { IRevealable } from "./interfaces/IRevealable.sol";
+import { IWithdrawable } from "./interfaces/IWithdrawable.sol";
 
 import { ERC165 } from "./ERC165.sol";
 
@@ -24,12 +25,12 @@ contract Nifty is
   IERC721,
   IERC721Enumerable,
   IERC721Metadata,
-  IERC721Ownable2Steps,
-  IERC721Mintable,
-  IERC721Burnable,
-  IERC721Withdrawable,
-  IERC721Revealable,
-  IERC721Pausable,
+  IOwnable2Steps,
+  IMintable,
+  IBurnable,
+  IWithdrawable,
+  IRevealable,
+  IPausable,
   ERC165
 {
   address public immutable creator;
@@ -263,12 +264,12 @@ contract Nifty is
     require(msg.sender == owner_, Unauthorized());
     require(
       bytes(baseURI_).length != 0 && baseURICommitment_ == 0 && block.timestamp >= withdrawTimeLockEnd_,
-      IERC721Withdrawable.WithdrawLocked()
+      IWithdrawable.WithdrawLocked()
     );
 
     (bool success,) = payable(owner_).call{ value: address(this).balance }("");
 
-    require(success, IERC721Withdrawable.TransferFailed());
+    require(success, IWithdrawable.TransferFailed());
   }
 
   function commitRevealProperties(
@@ -281,7 +282,7 @@ contract Nifty is
     require(
       baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0
         && withdrawTimeLockAferReveal > 0,
-      IERC721Revealable.InvalidRevealProperties()
+      IRevealable.InvalidRevealProperties()
     );
 
     baseURI_ = allTokensURIBeforeReveal;
@@ -296,7 +297,7 @@ contract Nifty is
 
   function reveal(string calldata baseURI) external {
     require(msg.sender == owner_, INifty.Unauthorized());
-    require(baseURICommitment_ == uint256(keccak256(abi.encodePacked(baseURI))), IERC721Revealable.WrongPreimage());
+    require(baseURICommitment_ == uint256(keccak256(abi.encodePacked(baseURI))), IRevealable.WrongPreimage());
 
     baseURICommitment_ = 0;
     baseURI_ = baseURI;

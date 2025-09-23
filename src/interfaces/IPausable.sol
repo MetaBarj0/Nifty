@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /// @title present the interface to implement the commit reveal token URI
 ///  pattern
-interface IERC721Pausable {
+interface IPausable {
   /// @notice A specific error regarding the pausable feature of this NFT
   /// @dev The pause can affect both minting and burning
   error MintAndBurnPaused();

@@ -2,14 +2,15 @@
 pragma solidity 0.8.30;
 
 import { Nifty } from "../src/Nifty.sol";
-import { IERC721Mintable } from "../src/interfaces/IERC721Mintable.sol";
-import { IERC721Revealable } from "../src/interfaces/IERC721Revealable.sol";
+import { IMintable } from "../src/interfaces/IMintable.sol";
+
 import { INifty } from "../src/interfaces/INifty.sol";
+import { IRevealable } from "../src/interfaces/IRevealable.sol";
 
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
 
-contract ERC721RevealableTests is Test, NiftyTestUtils {
+contract RevealableTests is Test, NiftyTestUtils {
   address private alice;
 
   function setUp() public {
@@ -34,22 +35,22 @@ contract ERC721RevealableTests is Test, NiftyTestUtils {
   }
 
   function test_commitRevealProperties_throws_ifBaseURIHashIsZero() public {
-    vm.expectRevert(IERC721Revealable.InvalidRevealProperties.selector);
+    vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     nifty.commitRevealProperties(0, "", 0, 0);
   }
 
   function test_commitRevealProperties_throws_ifAllTokenURIBeforeRevealIsEmpty() public {
-    vm.expectRevert(IERC721Revealable.InvalidRevealProperties.selector);
+    vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     nifty.commitRevealProperties(uint256(keccak256("an/address")), "", 0, 0);
   }
 
   function test_commitRevealProperties_throws_ifRevealTimeLockIsIncorrect() public {
-    vm.expectRevert(IERC721Revealable.InvalidRevealProperties.selector);
+    vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     nifty.commitRevealProperties(uint256(keccak256("revealed/address")), "before/reveal/address", 0, 1 days);
   }
 
   function test_commitRevealProperties_throws_ifWithdrawTimeLockIsIncorrect() public {
-    vm.expectRevert(IERC721Revealable.InvalidRevealProperties.selector);
+    vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     nifty.commitRevealProperties(uint256(keccak256("revealed/address")), "before/reveal/address", 1 days, 0);
   }
 
@@ -75,7 +76,7 @@ contract ERC721RevealableTests is Test, NiftyTestUtils {
   function test_reveal_throws_withIncorrectBaseURI() public {
     nifty.commitRevealProperties(uint256(keccak256("correct/base/address")), "before/reveal/address", 1 weeks, 2 days);
 
-    vm.expectRevert(IERC721Revealable.WrongPreimage.selector, 2);
+    vm.expectRevert(IRevealable.WrongPreimage.selector, 2);
     nifty.reveal("");
     nifty.reveal("incorrect/base/address");
   }
