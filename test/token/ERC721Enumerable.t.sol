@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IERC721Enumerable } from "../src/interfaces/token/IERC721Enumerable.sol";
-import { INifty } from "../src/interfaces/token/INifty.sol";
+import { IERC721Enumerable } from "../../src/interfaces/token/IERC721Enumerable.sol";
+import { INifty } from "../../src/interfaces/token/INifty.sol";
 
-import { Nifty } from "../src/token/Nifty.sol";
+import { Nifty } from "../../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
+import { NiftyTestUtils } from "../NiftyTestUtils.sol";
 
 contract ERC721EnumerableTests is Test, NiftyTestUtils {
   address private alice;

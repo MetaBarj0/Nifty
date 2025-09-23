@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
-import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy } from "../../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
+import { TransparentUpgradeableProxy } from "../../src/proxy/TransparentUpgradeableProxy.sol";
 
-import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "./Mocks.sol";
+import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "../Mocks.sol";
 import { Test } from "forge-std/Test.sol";
 
 contract ProxyTests is Test {
