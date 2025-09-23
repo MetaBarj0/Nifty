@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IERC721TokenReceiver } from "../src/interfaces/IERC721TokenReceiver.sol";
-import { IInitializable } from "../src/interfaces/IInitializable.sol";
+import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
+import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
-import { ERC165 } from "../src/ERC165.sol";
+import { ERC165 } from "../src/introspection/ERC165.sol";
 
 contract FailingReceiver is IERC721TokenReceiver {
   error OhShit();

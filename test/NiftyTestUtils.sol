@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Nifty } from "../src/Nifty.sol";
+import { Nifty } from "../src/token/Nifty.sol";
 
 abstract contract NiftyTestUtils is Test {
   Nifty internal nifty;

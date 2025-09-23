@@ -3,21 +3,21 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import { IBurnable } from "./interfaces/IBurnable.sol";
-import { IERC165 } from "./interfaces/IERC165.sol";
-import { IERC721 } from "./interfaces/IERC721.sol";
-import { IERC721Enumerable } from "./interfaces/IERC721Enumerable.sol";
-import { IERC721Metadata } from "./interfaces/IERC721Metadata.sol";
-import { IERC721TokenReceiver } from "./interfaces/IERC721TokenReceiver.sol";
-import { IMintable } from "./interfaces/IMintable.sol";
+import { IERC165 } from "../interfaces/introspection/IERC165.sol";
+import { IERC721 } from "../interfaces/token/IERC721.sol";
+import { IERC721Enumerable } from "../interfaces/token/IERC721Enumerable.sol";
+import { IERC721Metadata } from "../interfaces/token/IERC721Metadata.sol";
+import { IERC721TokenReceiver } from "../interfaces/token/IERC721TokenReceiver.sol";
 
-import { INifty } from "./interfaces/INifty.sol";
-import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
-import { IPausable } from "./interfaces/IPausable.sol";
-import { IRevealable } from "./interfaces/IRevealable.sol";
-import { IWithdrawable } from "./interfaces/IWithdrawable.sol";
+import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
+import { IPausable } from "../interfaces/IPausable.sol";
+import { IRevealable } from "../interfaces/IRevealable.sol";
+import { IWithdrawable } from "../interfaces/IWithdrawable.sol";
+import { IBurnable } from "../interfaces/token/IBurnable.sol";
+import { IMintable } from "../interfaces/token/IMintable.sol";
+import { INifty } from "../interfaces/token/INifty.sol";
 
-import { ERC165 } from "./ERC165.sol";
+import { ERC165 } from "../introspection/ERC165.sol";
 
 // TODO: @inheritdoc for all
 contract Nifty is

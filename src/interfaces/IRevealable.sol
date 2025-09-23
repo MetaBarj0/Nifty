@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+// TODO: rethink this interface which relies on withdraw concepts and features.
 /// @title present the interface to implement the commit reveal token URI
 ///  pattern
 interface IRevealable {
