@@ -7,11 +7,8 @@ import { Nifty } from "../src/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { FailingReceiver } from "./FailingReceiver.sol";
-import { InvalidReceiver } from "./InvalidReceiver.sol";
+import { FailingReceiver, InvalidReceiver, NonCompliantReceiver, ValidReceiver } from "./Mocks.sol";
 import { NiftyTestUtils } from "./NiftyTestUtils.sol";
-import { NonCompliantReceiver } from "./NonCompliantReceiver.sol";
-import { ValidReceiver } from "./ValidReceiver.sol";
 
 contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   address private alice;

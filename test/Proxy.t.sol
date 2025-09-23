@@ -4,9 +4,7 @@ pragma solidity 0.8.30;
 import { Proxy } from "../src/Proxy.sol";
 import { ITransparentUpgradeableProxy } from "../src/interfaces/ITransparentUpgradeableProxy.sol";
 
-import { FailingInitializableImplementation } from "./FailingInitializableImplementation.sol";
-import { NotInitializableImplementation } from "./NotInitializableImplementation.sol";
-import { TestImplementation } from "./TestImplementation.sol";
+import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "./Mocks.sol";
 import { Test } from "forge-std/Test.sol";
 
 contract ProxyTests is Test {
