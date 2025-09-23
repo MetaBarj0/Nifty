@@ -3,37 +3,22 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import { IERC165 } from "../interfaces/introspection/IERC165.sol";
-import { IERC721 } from "../interfaces/token/IERC721.sol";
-import { IERC721Enumerable } from "../interfaces/token/IERC721Enumerable.sol";
-import { IERC721Metadata } from "../interfaces/token/IERC721Metadata.sol";
-import { IERC721TokenReceiver } from "../interfaces/token/IERC721TokenReceiver.sol";
-
-import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
-import { IPausable } from "../interfaces/IPausable.sol";
 import { IRevealable } from "../interfaces/IRevealable.sol";
 import { IWithdrawable } from "../interfaces/IWithdrawable.sol";
-import { IBurnable } from "../interfaces/token/IBurnable.sol";
-import { IMintable } from "../interfaces/token/IMintable.sol";
+import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
+
+import { IERC721 } from "../interfaces/token/IERC721.sol";
+import { IERC721TokenReceiver } from "../interfaces/token/IERC721TokenReceiver.sol";
+
+import { IERC165 } from "../interfaces/introspection/IERC165.sol";
+
 import { INifty } from "../interfaces/token/INifty.sol";
 
 import { ERC165 } from "../introspection/ERC165.sol";
 
 // TODO: @inheritdoc for all
-contract Nifty is
-  INifty,
-  IERC721,
-  IERC721Enumerable,
-  IERC721Metadata,
-  IOwnable2Steps,
-  IMintable,
-  IBurnable,
-  IWithdrawable,
-  IRevealable,
-  IPausable,
-  ERC165
-{
-  address public immutable creator;
+contract Nifty is INifty, ERC165 {
+  address public creator;
 
   mapping(uint256 => address) private tokenIdToOwner;
   mapping(address => uint256) private balances;
@@ -55,13 +40,19 @@ contract Nifty is
 
   bool paused_;
 
+  function initialize(bytes calldata) external {
+    creator = msg.sender;
+    owner_ = msg.sender;
+  }
+
   constructor() {
     creator = msg.sender;
     owner_ = msg.sender;
   }
 
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
-    return interfaceId == type(INifty).interfaceId || super.supportsInterface(interfaceId);
+    return interfaceId == type(IInitializable).interfaceId || interfaceId == type(INifty).interfaceId
+      || super.supportsInterface(interfaceId);
   }
 
   function balanceOf(address tokenOwner) external view returns (uint256) {
