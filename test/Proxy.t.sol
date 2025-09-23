@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { Proxy } from "../src/Proxy.sol";
-import { ITransparentUpgradeableProxy } from "../src/interfaces/ITransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
+import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
 
 import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "./Mocks.sol";
 import { Test } from "forge-std/Test.sol";
@@ -15,7 +15,7 @@ contract ProxyTests is Test {
 
   function setUp() public {
     implementation = new TestImplementation();
-    proxy = new Proxy(address(implementation), abi.encode(42));
+    proxy = new TransparentUpgradeableProxy(address(implementation), abi.encode(42));
 
     alice = makeAddr("alice");
   }
@@ -23,7 +23,7 @@ contract ProxyTests is Test {
   function test_constructor_throws_withZeroImplementation() public {
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
 
-    new Proxy(address(0), "");
+    new TransparentUpgradeableProxy(address(0), "");
   }
 
   function test_constructor_throws_withNotInitializableImplementation() public {
@@ -31,7 +31,7 @@ contract ProxyTests is Test {
 
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
 
-    new Proxy(address(notInitializableImplementation), "");
+    new TransparentUpgradeableProxy(address(notInitializableImplementation), "");
   }
 
   function test_constructor_throws_withFailingInitializableImplementation() public {
@@ -39,7 +39,7 @@ contract ProxyTests is Test {
 
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
 
-    new Proxy(address(failingInitializableImplementation), "");
+    new TransparentUpgradeableProxy(address(failingInitializableImplementation), "");
   }
 
   function test_constructor_initializesAdminAndImplementation_forAdminAccess() public {
