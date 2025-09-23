@@ -72,8 +72,8 @@ contract ProxyTests is Test {
 
     assertTrue(successAdminCall);
     assertTrue(successImplementationCall);
-    assertEq(abi.decode(dataAdminCall, (string)), "admin from implementation");
-    assertEq(abi.decode(dataImplementationCall, (string)), "implementation from implementation");
+    assertEq(abi.decode(dataAdminCall, (string)), implementation.admin());
+    assertEq(abi.decode(dataImplementationCall, (string)), implementation.implementation());
   }
 
   function test_callForward_throwsForUnexistingFunction_forNotAdmin() public {
