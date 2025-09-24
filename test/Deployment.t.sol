@@ -11,22 +11,34 @@ import { NiftyTestUtils } from "./NiftyTestUtils.sol";
 contract DeploymentTests is Test, NiftyTestUtils {
   address alice;
 
+  struct SUTDatum {
+    address sut;
+    address user;
+  }
+
   function setUp() public {
     nifty = new Nifty();
     proxy = new TransparentUpgradeableProxy(address(nifty), "");
 
     alice = makeAddr("alice");
-    vm.startPrank(alice);
   }
 
-  function test_deploy_creatorIsSet() public {
-    (bool implSuccess, bytes memory implData) = address(nifty).call(abi.encodeWithSignature("creator()"));
-    (bool proxySuccess, bytes memory proxyData) = address(proxy).call(abi.encodeWithSignature("creator()"));
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    SUTDatum[] memory sutData = new SUTDatum[](2);
+    sutData[0].sut = address(nifty);
+    sutData[0].user = address(this);
+    sutData[1].sut = address(proxy);
+    sutData[1].user = alice;
 
-    assertTrue(implSuccess);
-    assertEq(address(this), abi.decode(implData, (address)));
+    return sutData;
+  }
 
-    assertTrue(proxySuccess);
-    assertEq(address(this), abi.decode(proxyData, (address)));
+  function table_deploy_creatorIsSet(SUTDatum calldata sutDatum) public {
+    vm.startPrank(sutDatum.user);
+    (bool success, bytes memory data) = sutDatum.sut.call(abi.encodeWithSignature("creator()"));
+    vm.stopPrank();
+
+    assertTrue(success);
+    assertEq(address(this), abi.decode(data, (address)));
   }
 }
