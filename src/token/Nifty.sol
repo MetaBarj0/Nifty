@@ -7,7 +7,6 @@ import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
 
 import { IPausable } from "../interfaces/IPausable.sol";
 import { IRevealable } from "../interfaces/IRevealable.sol";
-import { IWithdrawable } from "../interfaces/IWithdrawable.sol";
 import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
 
 import { IERC721 } from "../interfaces/token/IERC721.sol";
@@ -38,7 +37,6 @@ contract Nifty is INifty, ERC165 {
   string private baseURI_;
   uint256 private baseURICommitment_;
   uint256 private revealTimeLockEnd_;
-  uint256 private withdrawTimeLockEnd_;
 
   bool private paused_;
 
@@ -271,41 +269,22 @@ contract Nifty is INifty, ERC165 {
     owner_ = address(0);
   }
 
-  function withdraw() external {
-    require(msg.sender == owner_, Unauthorized());
-    require(
-      bytes(baseURI_).length != 0 && baseURICommitment_ == 0 && block.timestamp >= withdrawTimeLockEnd_,
-      IWithdrawable.WithdrawLocked()
-    );
-
-    emit IWithdrawable.Withdrawn(owner_, address(this).balance);
-
-    (bool success,) = payable(owner_).call{ value: address(this).balance }("");
-
-    require(success, IWithdrawable.TransferFailed());
-  }
-
   function commitRevealProperties(
     uint256 baseURICommitment,
     string calldata allTokensURIBeforeReveal,
-    uint256 revealTimeLock,
-    uint256 withdrawTimeLockAferReveal
+    uint256 revealTimeLock
   ) external {
     require(msg.sender == owner_, INifty.Unauthorized());
     require(
-      baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0
-        && withdrawTimeLockAferReveal > 0,
+      baseURICommitment != 0 && bytes(allTokensURIBeforeReveal).length != 0 && revealTimeLock > 0,
       IRevealable.InvalidRevealProperties()
     );
 
     baseURI_ = allTokensURIBeforeReveal;
     baseURICommitment_ = baseURICommitment;
     revealTimeLockEnd_ = block.timestamp + revealTimeLock;
-    withdrawTimeLockEnd_ = block.timestamp + revealTimeLock + withdrawTimeLockAferReveal;
 
-    emit IRevealable.RevealPropertiesCommitted(
-      baseURICommitment, allTokensURIBeforeReveal, revealTimeLock, withdrawTimeLockAferReveal
-    );
+    emit IRevealable.RevealPropertiesCommitted(baseURICommitment, allTokensURIBeforeReveal, revealTimeLock);
   }
 
   function revealTimeLockEnd() external view returns (uint256) {
@@ -340,9 +319,5 @@ contract Nifty is INifty, ERC165 {
 
   function paused() external view returns (bool) {
     return paused_;
-  }
-
-  function withdrawTimeLockEnd() external view returns (uint256) {
-    return withdrawTimeLockEnd_;
   }
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// TODO: rethink this interface which relies on withdraw concepts and features.
 /// @title present the interface to implement the commit reveal token URI
 ///  pattern
 interface IRevealable {
@@ -24,14 +23,10 @@ interface IRevealable {
   /// @param allTokensURIBeforeReveal the URI for all tokens before the reveal
   /// @param revealTimeLock the amount of second that must pass before
   ///  considering the reveal as completed.
-  /// @param withdrawTimeLockAfterReveal the amount of second that must pass
-  ///  after the reveal before /  the owner is allowed to withdraw funds from
-  ///  the contract
   function commitRevealProperties(
     uint256 baseURICommitment,
     string calldata allTokensURIBeforeReveal,
-    uint256 revealTimeLock,
-    uint256 withdrawTimeLockAfterReveal
+    uint256 revealTimeLock
   ) external;
 
   /// @notice Get the end of the reveal time lock
@@ -47,11 +42,6 @@ interface IRevealable {
   /// @param baseURI the final base URI for all tokens handled by this NFT.
   function reveal(string calldata baseURI) external;
 
-  /// @notice Get the end of the withdraw time lock
-  /// @dev Returns 0 if not set with a prior commitRevealProperties call
-  /// @return the time when the owner is allowed to withdraw funds from the contract
-  function withdrawTimeLockEnd() external view returns (uint256);
-
   /// @notice emitted after a successful commitRevealProperties call
   /// @dev There is no indexed parameters here, it is intentional
   /// @param baseURICommitment the keccak256 hash of the final base URI for all
@@ -59,15 +49,7 @@ interface IRevealable {
   /// @param allTokensURIBeforeReveal the URI for all tokens before the reveal
   /// @param revealTimeLock the amount of second that must pass before
   ///  considering the reveal as completed.
-  /// @param withdrawTimeLockAfterReveal the amount of second that must pass
-  ///  after the reveal before /  the owner is allowed to withdraw funds from
-  ///  the contract
-  event RevealPropertiesCommitted(
-    uint256 baseURICommitment,
-    string allTokensURIBeforeReveal,
-    uint256 revealTimeLock,
-    uint256 withdrawTimeLockAfterReveal
-  );
+  event RevealPropertiesCommitted(uint256 baseURICommitment, string allTokensURIBeforeReveal, uint256 revealTimeLock);
 
   /// @notice emitted after a successful reveal call
   /// @dev There is no indexed parameters here, it is intentional

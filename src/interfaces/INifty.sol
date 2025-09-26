@@ -10,7 +10,6 @@ import { IERC721TokenReceiver } from "./token/IERC721TokenReceiver.sol";
 import { IOwnable2Steps } from "./IOwnable2Steps.sol";
 import { IPausable } from "./IPausable.sol";
 import { IRevealable } from "./IRevealable.sol";
-import { IWithdrawable } from "./IWithdrawable.sol";
 
 import { IInitializable } from "./proxy/IInitializable.sol";
 import { IBurnable } from "./token/IBurnable.sol";
@@ -25,7 +24,6 @@ interface INifty is
   IOwnable2Steps,
   IMintable,
   IBurnable,
-  IWithdrawable,
   IRevealable,
   IPausable
 {
