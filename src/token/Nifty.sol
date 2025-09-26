@@ -300,6 +300,10 @@ contract Nifty is INifty, ERC165 {
     baseURICommitment_ = baseURICommitment;
     revealTimeLockEnd_ = block.timestamp + revealTimeLock;
     withdrawTimeLockEnd_ = block.timestamp + revealTimeLock + withdrawTimeLockAferReveal;
+
+    emit IRevealable.RevealPropertiesCommitted(
+      baseURICommitment, allTokensURIBeforeReveal, revealTimeLock, withdrawTimeLockAferReveal
+    );
   }
 
   function revealTimeLockEnd() external view returns (uint256) {
@@ -312,6 +316,8 @@ contract Nifty is INifty, ERC165 {
 
     baseURICommitment_ = 0;
     baseURI_ = baseURI;
+
+    emit IRevealable.Revealed(baseURI_);
   }
 
   function pause() external {

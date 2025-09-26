@@ -51,4 +51,26 @@ interface IRevealable {
   /// @dev Returns 0 if not set with a prior commitRevealProperties call
   /// @return the time when the owner is allowed to withdraw funds from the contract
   function withdrawTimeLockEnd() external view returns (uint256);
+
+  /// @notice emitted after a successful commitRevealProperties call
+  /// @dev There is no indexed parameters here, it is intentional
+  /// @param baseURICommitment the keccak256 hash of the final base URI for all
+  ///   tokens
+  /// @param allTokensURIBeforeReveal the URI for all tokens before the reveal
+  /// @param revealTimeLock the amount of second that must pass before
+  ///  considering the reveal as completed.
+  /// @param withdrawTimeLockAfterReveal the amount of second that must pass
+  ///  after the reveal before /  the owner is allowed to withdraw funds from
+  ///  the contract
+  event RevealPropertiesCommitted(
+    uint256 baseURICommitment,
+    string allTokensURIBeforeReveal,
+    uint256 revealTimeLock,
+    uint256 withdrawTimeLockAfterReveal
+  );
+
+  /// @notice emitted after a successful reveal call
+  /// @dev There is no indexed parameters here, it is intentional
+  /// @param baseURI the revealed base URI
+  event Revealed(string baseURI);
 }
