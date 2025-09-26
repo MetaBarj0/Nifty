@@ -8,38 +8,46 @@ import { Nifty } from "../../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
 contract ERC721MetadataTests is Test, NiftyTestUtils {
   address private alice;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
   }
 
-  function test_name_succeeds_afterDeploy() public view {
-    assertEq(nifty.name(), "Nifty");
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_symbol_succeeds_afterDeploy() public view {
-    assertEq(nifty.symbol(), "NFT xD");
+  function table_name_succeeds_afterDeploy(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    assertEq("Nifty", callForString(sut, user, abi.encodeWithSignature("name()")));
   }
 
-  function test_tokenURI_throws_forInvalidTokenId() public {
+  function table_symbol_succeeds_afterDeploy(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    assertEq("NFT xD", callForString(sut, user, abi.encodeWithSignature("symbol()")));
+  }
+
+  function table_tokenURI_throws_forInvalidTokenId(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
     vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.tokenURI(0);
+    callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0));
   }
 
-  function test_tokenURI_throws_forBurntToken() public {
-    paidMint(alice, 0);
+  function table_tokenURI_throws_forBurntToken(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.burn(0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
 
     vm.expectRevert(INifty.InvalidTokenId.selector);
-    assertEq(nifty.tokenURI(0), "");
+    callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0));
   }
 }

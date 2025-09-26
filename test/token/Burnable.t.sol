@@ -6,127 +6,118 @@ import { INifty } from "../../src/interfaces/token/INifty.sol";
 
 import { Nifty } from "../../src/token/Nifty.sol";
 
-import { Test } from "forge-std/Test.sol";
+import { Test, console } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
 contract BurnableTests is Test, NiftyTestUtils {
   address private bob;
   address private alice;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
   }
 
-  function test_burn_throw_forNotMintedToken() public {
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-
-    nifty.burn(0);
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_burn_throws_forExistingTokenNotOwnedBySender() public {
-    paidMint(alice, 0);
+  function table_burn_throw_forNotMintedToken(SUTDatum calldata sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(bob);
-
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.burn(0);
-
-    vm.stopPrank();
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("burn(uint256)", 0));
   }
 
-  function test_burn_succeeds_decreasingTotalSupply() public {
-    paidMint(alice, 0);
-    paidMint(alice, 1);
-    uint256 supplyBeforeBurn = nifty.totalSupply();
+  function table_burn_throws_forExistingTokenNotOwnedBySender(SUTDatum calldata sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.burn(1);
-    vm.stopPrank();
+    paidMintNew(sutDatum.sut, alice, 0);
 
+    expectCallRevert(INifty.Unauthorized.selector, sut, user, abi.encodeWithSignature("burn(uint256)", 0));
+  }
+
+  function table_burn_succeeds_decreasingTotalSupply(SUTDatum calldata sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    paidMintNew(sut, alice, 0);
+    paidMintNew(sut, alice, 1);
+
+    uint256 supplyBeforeBurn = callForUint256(sut, user, abi.encodeWithSignature("totalSupply()"));
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 1));
+
+    assertCallEq(1, sut, alice, abi.encodeWithSignature("totalSupply()"));
     assertEq(2, supplyBeforeBurn);
-    assertEq(1, nifty.totalSupply());
   }
 
-  function test_burn_succeeds_atRemovingTokenOwnership() public {
-    paidMint(alice, 0);
-    address token0OwnerBeforeBurn = nifty.ownerOf(0);
+  function table_burn_succeeds_atRemovingTokenOwnership(SUTDatum calldata sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.burn(0);
-    vm.stopPrank();
+    paidMintNew(sutDatum.sut, alice, 0);
+
+    address token0OwnerBeforeBurn = callForAddress(sut, alice, abi.encodeWithSignature("ownerOf(uint256)", 0));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
 
     assertEq(token0OwnerBeforeBurn, alice);
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.ownerOf(0);
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("ownerOf(uint256)", 0));
   }
 
-  function test_burn_succeeds_atDecreasingOwnerBalance() public {
-    paidMint(alice, 0);
-    uint256 balanceBeforeBurn = nifty.balanceOf(alice);
+  function table_burn_succeeds_atDecreasingOwnerBalance(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
-    nifty.burn(0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
+    uint256 balanceBeforeBurn = callForUint256(sut, alice, abi.encodeWithSignature("balanceOf(address)", alice));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
 
     assertEq(1, balanceBeforeBurn);
-    assertEq(0, nifty.balanceOf(alice));
+    assertEq(0, callForUint256(sut, alice, abi.encodeWithSignature("balanceOf(address)", alice)));
   }
 
-  function test_burn_succeeds_atRemovingBurntTokenApproval() public {
-    paidMint(alice, 0);
+  function table_burn_succeeds_atRemovingBurntTokenApproval(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.approve(bob, 0);
-    vm.stopPrank();
-
-    address approvedBeforeBurn = nifty.getApproved(0);
-
-    vm.startPrank(alice);
-    nifty.burn(0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
+    callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
+    address approvedBeforeBurn = callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0));
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
 
     assertEq(bob, approvedBeforeBurn);
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.getApproved(0);
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("getApproved(uint256)", 0));
   }
 
-  function test_burn_succeeds_ifQueriedByApprovedAddress() public {
-    paidMint(alice, 0);
+  function table_burn_succeeds_ifQueriedByApprovedAddress(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
-    nifty.approve(bob, 0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
 
-    vm.startPrank(bob);
-    nifty.burn(0);
-    vm.stopPrank();
+    callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
+
+    vm.expectEmit();
+    emit IERC721.Transfer(bob, address(0), 0);
+    callForVoid(sut, bob, abi.encodeWithSignature("burn(uint256)", 0));
   }
 
-  function test_burn_succeeds_ifQueriedByOperator() public {
-    paidMint(alice, 0);
+  function table_burn_succeeds_ifQueriedByOperator(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
-    nifty.setApprovalForAll(bob, true);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
 
-    vm.startPrank(bob);
-    nifty.burn(0);
-    vm.stopPrank();
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
+
+    vm.expectEmit();
+    emit IERC721.Transfer(bob, address(0), 0);
+    callForVoid(sut, bob, abi.encodeWithSignature("burn(uint256)", 0));
   }
 
-  function test_burn_emitsTransferEvent_ifItSucceeds() public {
-    paidMint(alice, 3);
+  function table_burn_emitsTransferEvent_ifQueriedByOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 3);
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, address(0), 3);
-    nifty.burn(3);
-
-    vm.stopPrank();
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 3));
   }
 }

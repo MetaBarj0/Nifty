@@ -7,103 +7,191 @@ import { Nifty } from "../../src/token/Nifty.sol";
 import { IRevealable } from "../../src/interfaces/IRevealable.sol";
 import { INifty } from "../../src/interfaces/token/INifty.sol";
 
-import { NiftyTestUtils } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 import { Test } from "forge-std/Test.sol";
 
 contract RevealableTests is Test, NiftyTestUtils {
   address private alice;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
   }
 
-  function test_tokenURI_isEmpty_beforeCommitRevealPropertiesCall() public {
-    paidMint(alice, 0);
-
-    assertEq(nifty.tokenURI(0), "");
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_commitRevealProperties_throws_ifNotCalledByOwner() public {
-    vm.startPrank(alice);
+  function table_tokenURI_isEmpty_beforeCommitRevealPropertiesCall(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
+    paidMintNew(sut, alice, 0);
+
+    assertEq("", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
+  }
+
+  function table_commitRevealProperties_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
     vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.commitRevealProperties(0, "", 0, 0);
-
-    vm.stopPrank();
+    callForVoid(
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("commitRevealProperties(uint256,string,uint256,uint256)", 0, "", 0, 0)
+    );
   }
 
-  function test_commitRevealProperties_throws_ifBaseURIHashIsZero() public {
+  function table_commitRevealProperties_throws_ifBaseURIHashIsZero(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
-    nifty.commitRevealProperties(0, "", 0, 0);
+    callForVoid(
+      sut, niftyDeployer, abi.encodeWithSignature("commitRevealProperties(uint256,string,uint256,uint256)", 0, "", 0, 0)
+    );
   }
 
-  function test_commitRevealProperties_throws_ifAllTokenURIBeforeRevealIsEmpty() public {
+  function table_commitRevealProperties_throws_ifAllTokenURIBeforeRevealIsEmpty(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
-    nifty.commitRevealProperties(uint256(keccak256("an/address")), "", 0, 0);
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)", uint256(keccak256("an/address")), "", 0, 0
+      )
+    );
   }
 
-  function test_commitRevealProperties_throws_ifRevealTimeLockIsIncorrect() public {
+  function table_commitRevealProperties_throws_ifRevealTimeLockIsIncorrect(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
-    nifty.commitRevealProperties(uint256(keccak256("revealed/address")), "before/reveal/address", 0, 1 days);
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("revealed/address")),
+        "before/reveal/address",
+        0,
+        1 days
+      )
+    );
   }
 
-  function test_commitRevealProperties_throws_ifWithdrawTimeLockIsIncorrect() public {
+  function table_commitRevealProperties_throws_ifWithdrawTimeLockIsIncorrect(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
-    nifty.commitRevealProperties(uint256(keccak256("revealed/address")), "before/reveal/address", 1 days, 0);
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("revealed/address")),
+        "before/reveal/address",
+        1 days,
+        0
+      )
+    );
   }
 
-  function test_commitRevealProperties_succeeds_ifCalledWithCorrectParameterSet() public {
-    paidMint(alice, 0);
+  function table_commitRevealProperties_succeeds_ifCalledWithCorrectParameterSet(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    assertEq(nifty.tokenURI(0), "");
+    paidMintNew(sut, alice, 0);
 
-    nifty.commitRevealProperties(uint256(keccak256("revealed/address")), "before/reveal/address", 1 days, 2 days);
+    assertEq("", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
 
-    assertEq(nifty.tokenURI(0), "before/reveal/address");
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("revealed/address")),
+        "before/reveal/address",
+        1 days,
+        2 days
+      )
+    );
+
+    assertEq("before/reveal/address", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
   }
 
-  function test_reveal_throws_ifNotOwner() public {
-    vm.startPrank(alice);
-
+  function table_reveal_throws_ifNotOwner(SUTDatum memory sutDatum) public {
     vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.reveal("");
-
-    vm.stopPrank();
+    callForVoid(sutDatum.sut, alice, abi.encodeWithSignature("reveal(string)", ""));
   }
 
-  function test_reveal_throws_withIncorrectBaseURI() public {
-    nifty.commitRevealProperties(uint256(keccak256("correct/base/address")), "before/reveal/address", 1 weeks, 2 days);
+  function table_reveal_throws_withIncorrectBaseURI(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("correct/base/address")),
+        "before/reveal/address",
+        1 weeks,
+        2 days
+      )
+    );
 
     vm.expectRevert(IRevealable.WrongPreimage.selector, 2);
-    nifty.reveal("");
-    nifty.reveal("incorrect/base/address");
+    callForVoid(sutDatum.sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", ""));
+    callForVoid(sutDatum.sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", "incorrect/base/address"));
   }
 
-  function test_tokenURI_succeedsAndReturnFinalURI_whenRevealIsDone() public {
-    paidMint(alice, 0);
+  function table_tokenURI_succeedsAndReturnFinalURI_whenRevealIsDone(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    nifty.commitRevealProperties(uint256(keccak256("correct/base/address")), "before/reveal/address", 1 days, 3 days);
+    paidMintNew(sut, alice, 0);
 
-    assertEq(nifty.tokenURI(0), "before/reveal/address");
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("correct/base/address")),
+        "before/reveal/address",
+        1 days,
+        3 days
+      )
+    );
 
-    nifty.reveal("correct/base/address");
+    assertEq("before/reveal/address", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
 
-    assertEq(nifty.tokenURI(0), "correct/base/address/0.json");
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", "correct/base/address"));
+
+    assertEq("correct/base/address/0.json", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
   }
 
-  function test_allTimeLocks_return0_whenCommitRevealPropertiesHasNotBeenCalled() public view {
-    assertEq(0, nifty.revealTimeLockEnd());
-    assertEq(0, nifty.withdrawTimeLockEnd());
+  function table_allTimeLocks_return0_whenCommitRevealPropertiesHasNotBeenCalled(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("revealTimeLockEnd()")));
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("withdrawTimeLockEnd()")));
   }
 
-  function test_allTimeLockEndFunctions_returnsTimeRelativeToBlockTimestamp_whenCommitRevealPropertiesHasBeenCalled()
-    public
-  {
-    nifty.commitRevealProperties(uint256(keccak256("correct/base/address")), "before/reveal/address", 123 hours, 1 days);
+  function table_allTimeLockEndFunctions_returnsTimeRelativeToBlockTimestamp_whenCommitRevealPropertiesHasBeenCalled(
+    SUTDatum memory sutDatum
+  ) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    assertEq(block.timestamp + 123 hours, nifty.revealTimeLockEnd());
-    assertEq(block.timestamp + 123 hours + 1 days, nifty.withdrawTimeLockEnd());
+    callForVoid(
+      sut,
+      niftyDeployer,
+      abi.encodeWithSignature(
+        "commitRevealProperties(uint256,string,uint256,uint256)",
+        uint256(keccak256("correct/base/address")),
+        "before/reveal/address",
+        123 hours,
+        1 days
+      )
+    );
+
+    assertEq(block.timestamp + 123 hours, callForUint256(sut, user, abi.encodeWithSignature("revealTimeLockEnd()")));
+    assertEq(
+      block.timestamp + 123 hours + 1 days, callForUint256(sut, user, abi.encodeWithSignature("withdrawTimeLockEnd()"))
+    );
   }
 }

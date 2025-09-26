@@ -8,7 +8,7 @@ import { Nifty } from "../../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
 contract ERC721EnumerableTests is Test, NiftyTestUtils {
   address private alice;
@@ -16,124 +16,133 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   address private chuck;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
     chuck = makeAddr("Chuck");
   }
 
-  function test_totalSupply_returns0AtContractInitialization() public view {
-    assertEq(nifty.totalSupply(), 0);
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_totalSupply_succeeds_atReturningMintedTokenAmount() public {
-    paidMint(alice, 0);
-    paidMint(bob, 1);
-    paidMint(chuck, 2);
-
-    assertEq(nifty.totalSupply(), 3);
+  function table_totalSupply_returns0AtContractInitialization(SUTDatum memory sutDatum) public {
+    assertEq(callForUint256(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("totalSupply()")), 0);
   }
 
-  function test_totalSupply_succeeds_atReturningMintedAndBurntTokenAmount() public {
-    paidMint(alice, 0);
-    paidMint(alice, 1);
-    uint256 balanceBeforeBurn = nifty.balanceOf(alice);
+  function table_totalSupply_succeeds_atReturningMintedTokenAmount(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.burn(1);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
+    paidMintNew(sut, bob, 1);
+    paidMintNew(sut, chuck, 2);
+
+    assertEq(callForUint256(sut, user, abi.encodeWithSignature("totalSupply()")), 3);
+  }
+
+  function table_totalSupply_succeeds_atReturningMintedAndBurntTokenAmount(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    paidMintNew(sut, alice, 0);
+    paidMintNew(sut, alice, 1);
+
+    uint256 balanceBeforeBurn = callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 1));
 
     assertEq(balanceBeforeBurn, 2);
-    assertEq(nifty.totalSupply(), 1);
+    assertEq(callForUint256(sut, user, abi.encodeWithSignature("totalSupply()")), 1);
   }
 
-  function test_tokenByIndex_throws_forIndexGreaterOrEqualThanTotalSupply() public {
-    assertEq(nifty.totalSupply(), 0);
-    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
-    nifty.tokenByIndex(0);
+  function table_tokenByIndex_throws_forIndexGreaterOrEqualThanTotalSupply(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMint(alice, 0);
-    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
-    nifty.tokenByIndex(1);
-  }
-
-  function test_tokenByIndex_succeeds_forMintedTokens() public {
-    paidMint(alice, 42);
-    paidMint(bob, 43);
-
-    assertEq(42, nifty.tokenByIndex(0));
-    assertEq(43, nifty.tokenByIndex(1));
-  }
-
-  function test_tokenByIndex_throws_forABurntTokenAtSpecifiedIndex() public {
-    paidMint(alice, 42);
-    paidMint(bob, 43);
-    paidMint(alice, 44);
-
-    vm.startPrank(alice);
-    nifty.burn(42);
-    nifty.burn(44);
-    vm.stopPrank();
-
-    assertEq(43, nifty.tokenByIndex(0));
+    assertEq(callForUint256(sut, user, abi.encodeWithSignature("totalSupply()")), 0);
 
     vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
-    nifty.tokenByIndex(1);
-  }
+    callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 0));
 
-  function test_tokenOfOwnerByIndex_throws_forIndexGreaterOrEqualToOwnerBalance() public {
+    paidMintNew(sut, alice, 0);
+
     vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
-    nifty.tokenOfOwnerByIndex(alice, 0);
+    callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 1));
   }
 
-  function test_tokenOfOwnerByIndex_throws_forInvalidToken() public {
+  function table_tokenByIndex_succeeds_forMintedTokens(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    paidMintNew(sut, alice, 42);
+    paidMintNew(sut, bob, 43);
+
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 0)));
+    assertEq(43, callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 1)));
+  }
+
+  function table_tokenByIndex_throws_forABurntTokenAtSpecifiedIndex(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    paidMintNew(sut, alice, 42);
+    paidMintNew(sut, bob, 43);
+    paidMintNew(sut, alice, 44);
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 42));
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 44));
+
+    assertEq(43, callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 0)));
+
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
+    callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 1));
+  }
+
+  function table_tokenOfOwnerByIndex_throws_forIndexGreaterOrEqualToOwnerBalance(SUTDatum memory sutDatum) public {
+    vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
+    callForUint256(sutDatum.sut, alice, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0));
+  }
+
+  function table_tokenOfOwnerByIndex_throws_forInvalidToken(SUTDatum memory sutDatum) public {
     vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.tokenOfOwnerByIndex(address(0), 0);
+    callForUint256(
+      sutDatum.sut, sutDatum.user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", address(0), 0)
+    );
   }
 
-  function test_tokenOfOwnerByIndex_succeeds_forDifferentOwners() public {
-    paidMint(alice, 10);
-    paidMint(alice, 11);
-    paidMint(bob, 12);
-    paidMint(bob, 13);
+  function table_tokenOfOwnerByIndex_succeeds_forDifferentOwners(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    assertEq(10, nifty.tokenOfOwnerByIndex(alice, 0));
-    assertEq(11, nifty.tokenOfOwnerByIndex(alice, 1));
-    assertEq(12, nifty.tokenOfOwnerByIndex(bob, 0));
-    assertEq(13, nifty.tokenOfOwnerByIndex(bob, 1));
+    paidMintNew(sut, alice, 10);
+    paidMintNew(sut, alice, 11);
+    paidMintNew(sut, bob, 12);
+    paidMintNew(sut, bob, 13);
+
+    assertEq(10, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+    assertEq(11, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
+    assertEq(12, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 0)));
+    assertEq(13, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 1)));
   }
 
-  function test_tokenOfOwnerByIndex_succeeds_forDifferentOwnersWhoBurn() public {
-    paidMint(alice, 10);
-    paidMint(alice, 11);
-    paidMint(alice, 12);
-    paidMint(bob, 13);
-    paidMint(bob, 14);
-    paidMint(bob, 15);
-    paidMint(chuck, 16);
-    paidMint(chuck, 17);
-    paidMint(chuck, 18);
+  function table_tokenOfOwnerByIndex_succeeds_forDifferentOwnersWhoBurn(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.burn(10);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 10);
+    paidMintNew(sut, alice, 11);
+    paidMintNew(sut, alice, 12);
+    paidMintNew(sut, bob, 13);
+    paidMintNew(sut, bob, 14);
+    paidMintNew(sut, bob, 15);
+    paidMintNew(sut, chuck, 16);
+    paidMintNew(sut, chuck, 17);
+    paidMintNew(sut, chuck, 18);
 
-    vm.startPrank(bob);
-    nifty.burn(14);
-    vm.stopPrank();
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 10));
+    callForVoid(sut, bob, abi.encodeWithSignature("burn(uint256)", 14));
+    callForVoid(sut, chuck, abi.encodeWithSignature("burn(uint256)", 18));
 
-    vm.startPrank(chuck);
-    nifty.burn(18);
-    vm.stopPrank();
+    assertEq(12, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+    assertEq(11, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
 
-    assertEq(12, nifty.tokenOfOwnerByIndex(alice, 0));
-    assertEq(11, nifty.tokenOfOwnerByIndex(alice, 1));
+    assertEq(13, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 0)));
+    assertEq(15, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 1)));
 
-    assertEq(13, nifty.tokenOfOwnerByIndex(bob, 0));
-    assertEq(15, nifty.tokenOfOwnerByIndex(bob, 1));
-
-    assertEq(16, nifty.tokenOfOwnerByIndex(chuck, 0));
-    assertEq(17, nifty.tokenOfOwnerByIndex(chuck, 1));
+    assertEq(16, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", chuck, 0)));
+    assertEq(17, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", chuck, 1)));
   }
 }

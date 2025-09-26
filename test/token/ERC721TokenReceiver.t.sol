@@ -8,7 +8,7 @@ import { Nifty } from "../../src/token/Nifty.sol";
 import { Test } from "forge-std/Test.sol";
 
 import { FailingReceiver, InvalidReceiver, NonCompliantReceiver, ValidReceiver } from "../Mocks.sol";
-import { NiftyTestUtils } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
 contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   address private alice;
@@ -18,8 +18,6 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   ValidReceiver private validReceiver;
 
   function setUp() public {
-    nifty = new Nifty();
-
     invalidReceiver = new InvalidReceiver();
     failingReceiver = new FailingReceiver();
     nonCompliantReceiver = new NonCompliantReceiver();
@@ -27,65 +25,95 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
     alice = makeAddr("Alice");
   }
 
-  function test_mint_throws_withInvalidReceiverContract() public {
-    vm.expectPartialRevert(INifty.InvalidReceiver.selector);
-    paidMint(address(invalidReceiver), 0);
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_mint_throws_withFailingReceiverContract() public {
+  function table_mint_throws_withInvalidReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    vm.expectPartialRevert(INifty.InvalidReceiver.selector);
+    paidMintNew(sut, address(invalidReceiver), 0);
+  }
+
+  function table_mint_throws_withFailingReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectRevert(FailingReceiver.OhShit.selector);
-    paidMint(address(failingReceiver), 0);
+    paidMintNew(sut, address(failingReceiver), 0);
   }
 
-  function test_mint_throws_withNonCompliantReceiverContract() public {
+  function table_mint_throws_withNonCompliantReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
     vm.expectPartialRevert(INifty.InvalidReceiver.selector);
-    paidMint(address(nonCompliantReceiver), 0);
+    paidMintNew(sut, address(nonCompliantReceiver), 0);
   }
 
-  function test_safeTransferFrom_throws_withInvalidReceiverContract() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_throws_withInvalidReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
+
     vm.expectPartialRevert(INifty.InvalidReceiver.selector);
-    nifty.safeTransferFrom(alice, address(invalidReceiver), 0);
-    vm.stopPrank();
+    callForVoid(
+      sut,
+      alice,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, address(invalidReceiver), 0)
+    );
   }
 
-  function test_safeTransferFrom_throws_withFailingReceiverContract() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_throws_withFailingReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
+
     vm.expectRevert();
-    nifty.safeTransferFrom(alice, address(invalidReceiver), 0);
-    vm.stopPrank();
+    callForVoid(
+      sut,
+      alice,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, address(failingReceiver), 0)
+    );
   }
 
-  function test_safeTransferFrom_throws_withNonCompliantReceiverContract() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_throws_withNonCompliantReceiverContract(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
+
     vm.expectRevert();
-    nifty.safeTransferFrom(alice, address(nonCompliantReceiver), 0);
-    vm.stopPrank();
+    callForVoid(
+      sut,
+      alice,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, address(nonCompliantReceiver), 0)
+    );
   }
 
-  function test_mint_succeeds_WithValidReceiverContract() public {
+  function table_mint_succeeds_WithValidReceiverContract(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
     vm.expectEmit();
     emit ValidReceiver.Received(address(validReceiver), address(0), 0);
-    paidMint(address(validReceiver), 0);
+    paidMintNew(sut, address(validReceiver), 0);
 
-    assertEq(nifty.balanceOf(address(validReceiver)), 1);
+    assertEq(1, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", validReceiver)));
   }
 
-  function test_safeTransferFrom_succeeds_withValidReceiverContract() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_succeeds_withValidReceiverContract(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
+
     vm.expectEmit();
     emit ValidReceiver.Received(alice, alice, 0);
-    nifty.safeTransferFrom(alice, address(validReceiver), 0, "validReceiver test");
-    vm.stopPrank();
+    callForVoid(
+      sut,
+      alice,
+      abi.encodeWithSignature(
+        "safeTransferFrom(address,address,uint256,bytes)", alice, address(validReceiver), 0, "validReceiver test"
+      )
+    );
 
-    assertEq(nifty.balanceOf(address(validReceiver)), 1);
+    assertEq(1, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", validReceiver)));
   }
 }
