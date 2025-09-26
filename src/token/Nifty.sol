@@ -4,6 +4,8 @@ pragma solidity 0.8.30;
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
+
+import { IPausable } from "../interfaces/IPausable.sol";
 import { IRevealable } from "../interfaces/IRevealable.sol";
 import { IWithdrawable } from "../interfaces/IWithdrawable.sol";
 import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
@@ -324,12 +326,16 @@ contract Nifty is INifty, ERC165 {
     require(msg.sender == owner_, INifty.Unauthorized());
 
     paused_ = true;
+
+    emit IPausable.Paused();
   }
 
   function resume() external {
     require(msg.sender == owner_, INifty.Unauthorized());
 
     paused_ = false;
+
+    emit IPausable.Resumed();
   }
 
   function paused() external view returns (bool) {
