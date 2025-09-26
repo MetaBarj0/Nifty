@@ -20,4 +20,9 @@ interface IWithdrawable {
   ///  Must throw if called before commitRevealProperties successful call
   ///  Must throw if called before the reveal lock has expired
   function withdraw() external;
+
+  /// @notice Emitted when a withdraw operation succeeded
+  /// @param to the beneficiary of the withdraw
+  /// @param amount withdrawn amount
+  event Withdrawn(address to, uint256 amount);
 }

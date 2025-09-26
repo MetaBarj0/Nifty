@@ -139,6 +139,8 @@ contract WithdrawableTests is Test, NiftyTestUtils {
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", "revealed/uri"));
     skip(2 days);
 
+    vm.expectEmit();
+    emit IWithdrawable.Withdrawn(niftyDeployer, revenuesInContractAfterMint);
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("withdraw()"));
 
     assertEq(revenuesInContractBeforeMint, 0);
