@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
 import { IRevealable } from "../interfaces/IRevealable.sol";
 import { IWithdrawable } from "../interfaces/IWithdrawable.sol";
 import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
@@ -42,12 +43,16 @@ contract Nifty is INifty, ERC165 {
   function initialize(bytes calldata data) external {
     address implementationOwner = abi.decode(data, (address));
     owner_ = implementationOwner;
+
+    emit OwnerChanged(address(0), owner_);
   }
 
   /// @dev Allow to use this contract as standalone, that is without a
   ///  transparent proxy
   constructor() {
     owner_ = msg.sender;
+
+    emit OwnerChanged(address(0), owner_);
   }
 
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
@@ -237,10 +242,14 @@ contract Nifty is INifty, ERC165 {
     require(owner_ == msg.sender, Unauthorized());
 
     pendingOwner_ = newOwner;
+
+    emit IOwnable2Steps.OwnerChanging(pendingOwner_);
   }
 
   function acceptOwnership() external {
     require(msg.sender == pendingOwner_, Unauthorized());
+
+    emit IOwnable2Steps.OwnerChanged(owner_, pendingOwner_);
 
     owner_ = pendingOwner_;
     pendingOwner_ = address(0);
@@ -248,6 +257,8 @@ contract Nifty is INifty, ERC165 {
 
   function renounceOwnership() external {
     require(msg.sender == owner_ && address(0) == pendingOwner_, Unauthorized());
+
+    emit IOwnable2Steps.OwnerChanged(owner_, address(0));
 
     owner_ = address(0);
   }
