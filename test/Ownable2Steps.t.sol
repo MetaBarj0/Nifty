@@ -10,7 +10,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-contract ERC721Ownable2StepsTests is Test, NiftyTestUtils {
+contract Ownable2StepsTests is Test, NiftyTestUtils {
   address private bob;
   address private alice;
 
@@ -52,7 +52,7 @@ contract ERC721Ownable2StepsTests is Test, NiftyTestUtils {
   function table_acceptOwnership_succeeds_ifPendingOwnerIsSender(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    address creatorBeforeOwnershipTransfer = callForAddress(sut, user, abi.encodeWithSignature("creator()"));
+    address ownerBeforeOwnershipTransfer = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
 
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
 
@@ -61,12 +61,9 @@ contract ERC721Ownable2StepsTests is Test, NiftyTestUtils {
 
     callForVoid(sut, alice, abi.encodeWithSignature("acceptOwnership()"));
 
-    assertEq(creatorBeforeOwnershipTransfer, niftyDeployer);
-    assertEq(nifty.creator(), niftyDeployer);
-
+    assertEq(ownerBeforeOwnershipTransfer, niftyDeployer);
     assertEq(niftyDeployer, ownerBeforeAccept);
     assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
-
     assertEq(alice, pendingOwnerBeforeAccept);
     assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()")));
   }

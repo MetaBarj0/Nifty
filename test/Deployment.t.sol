@@ -13,7 +13,7 @@ contract DeploymentTests is Test, NiftyTestUtils {
     return getSutData();
   }
 
-  function table_deploy_creatorIsSet(SUTDatum calldata sutDatum) public {
-    assertEq(niftyDeployer, callForAddress(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("creator()")));
+  function table_deploy_ownerIsSet(SUTDatum calldata sutDatum) public {
+    assertEq(niftyDeployer, callForAddress(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("owner()")));
   }
 }

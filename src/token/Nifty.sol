@@ -20,9 +20,6 @@ import { ERC165 } from "../introspection/ERC165.sol";
 
 // TODO: @inheritdoc for all
 contract Nifty is INifty, ERC165 {
-  // TODO: remove creator from Nifty, only keep owner
-  address public creator;
-
   mapping(uint256 => address) private tokenIdToOwner;
   mapping(address => uint256) private balances;
   mapping(uint256 => address) private tokenIdToApproved;
@@ -45,12 +42,10 @@ contract Nifty is INifty, ERC165 {
 
   function initialize(bytes calldata data) external {
     address implementationOwner = abi.decode(data, (address));
-    creator = implementationOwner;
     owner_ = implementationOwner;
   }
 
   constructor() {
-    creator = msg.sender;
     owner_ = msg.sender;
   }
 
