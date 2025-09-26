@@ -36,12 +36,12 @@ contract Nifty is INifty, ERC165 {
   address private owner_;
   address private pendingOwner_;
 
-  string baseURI_;
-  uint256 baseURICommitment_;
-  uint256 revealTimeLockEnd_;
-  uint256 withdrawTimeLockEnd_;
+  string private baseURI_;
+  uint256 private baseURICommitment_;
+  uint256 private revealTimeLockEnd_;
+  uint256 private withdrawTimeLockEnd_;
 
-  bool paused_;
+  bool private paused_;
 
   function initialize(bytes calldata data) external {
     address implementationOwner = abi.decode(data, (address));
