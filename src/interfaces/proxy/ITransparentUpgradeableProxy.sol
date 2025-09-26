@@ -17,6 +17,10 @@ interface ITransparentUpgradeableProxy {
   ///  without calldata
   error ReceiveUnsupported();
 
+  /// @notice emitted when the proxy has initialized the underlying
+  ///  implementation contract.
+  event ImplementationInitialized();
+
   /// @notice accessor for the admin address of the proxy deployment
   /// @dev Only executed if called by the actual admin. If sender is not the
   ///  admin, the call must be forwarded to the actual implementation
