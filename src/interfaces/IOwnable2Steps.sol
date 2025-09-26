@@ -30,4 +30,14 @@ interface IOwnable2Steps {
   /// @dev After this call, no one owns the contract anymore and nobody can own
   ///  this contract anymore in the future.
   function renounceOwnership() external;
+
+  /// @notice track owner changes
+  /// @param oldOwner the old owner before change. The first owner assignment
+  //   set oldOwner to address(0)
+  //  @param newOwner the new accepted owner
+  event OwnerChanged(address oldOwner, address newOwner);
+
+  /// @notice track owner being changed
+  //  @param newOwner the new pending owner
+  event OwnerChanging(address newOwner);
 }

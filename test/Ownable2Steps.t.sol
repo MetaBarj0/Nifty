@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import { IOwnable2Steps } from "../src/interfaces/IOwnable2Steps.sol";
 import { INifty } from "../src/interfaces/token/INifty.sol";
 
 import { Test } from "forge-std/Test.sol";
@@ -33,6 +34,8 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
 
     address oldPendingOwner = callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()"));
 
+    vm.expectEmit();
+    emit IOwnable2Steps.OwnerChanging(alice);
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
 
     assertEq(address(0), oldPendingOwner);
@@ -56,6 +59,8 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
     address ownerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
     address pendingOwnerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()"));
 
+    vm.expectEmit();
+    emit IOwnable2Steps.OwnerChanged(ownerBeforeOwnershipTransfer, alice);
     callForVoid(sut, alice, abi.encodeWithSignature("acceptOwnership()"));
 
     assertEq(ownerBeforeOwnershipTransfer, niftyDeployer);
@@ -86,6 +91,9 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
 
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", address(0)));
+
+    vm.expectEmit();
+    emit IOwnable2Steps.OwnerChanged(oldOwner, address(0));
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("renounceOwnership()"));
 
     assertEq(niftyDeployer, oldOwner);
