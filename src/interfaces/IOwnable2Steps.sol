@@ -35,9 +35,9 @@ interface IOwnable2Steps {
   /// @param oldOwner the old owner before change. The first owner assignment
   //   set oldOwner to address(0)
   //  @param newOwner the new accepted owner
-  event OwnerChanged(address oldOwner, address newOwner);
+  event OwnerChanged(address indexed oldOwner, address indexed newOwner);
 
   /// @notice track owner being changed
   //  @param newOwner the new pending owner
-  event OwnerChanging(address newOwner);
+  event OwnerChanging(address indexed newOwner);
 }

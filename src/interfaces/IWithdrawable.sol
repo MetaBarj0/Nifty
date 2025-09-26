@@ -24,5 +24,5 @@ interface IWithdrawable {
   /// @notice Emitted when a withdraw operation succeeded
   /// @param to the beneficiary of the withdraw
   /// @param amount withdrawn amount
-  event Withdrawn(address to, uint256 amount);
+  event Withdrawn(address indexed to, uint256 amount);
 }
