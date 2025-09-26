@@ -39,16 +39,6 @@ abstract contract NiftyTestUtils is Test {
     return sutData;
   }
 
-  // TODO: to remove and rename paidMintNew
-  function paidMint(address to, uint256 tokenId) internal {
-    vm.deal(to, 500 gwei);
-
-    // the to account pays for his token
-    vm.startPrank(to);
-    nifty.mint{ value: 500 gwei }(to, tokenId);
-    vm.stopPrank();
-  }
-
   function paidMintNew(address sut, address to, uint256 tokenId) internal {
     vm.deal(to, 500 gwei);
 
