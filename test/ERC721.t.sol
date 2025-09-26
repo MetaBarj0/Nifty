@@ -8,7 +8,7 @@ import { Nifty } from "../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract ERC721Tests is Test, NiftyTestUtils {
   address private alice;
@@ -17,265 +17,265 @@ contract ERC721Tests is Test, NiftyTestUtils {
   address private david;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
     chuck = makeAddr("Chuck");
     david = makeAddr("David");
   }
 
-  function test_balanceOf_returns0_forUserHavingNoToken() public view {
-    assertEq(0, nifty.balanceOf(bob));
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_balanceOf_succeeds_returnsUserBalance() public {
+  function table_balanceOf_returns0_forUserHavingNoToken(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", bob)));
+  }
+
+  function table_balanceOf_succeeds_returnsUserBalance(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
     for (uint256 index = 0; index < 42; index++) {
-      paidMint(alice, index);
+      paidMintNew(sut, alice, index);
     }
 
-    assertEq(42, nifty.balanceOf(alice));
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice)));
   }
 
-  function test_ownerOf_throws_forUnmintedTokens() public {
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.ownerOf(42);
+  function table_ownerOf_throws_forUnmintedTokens(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("ownerOf(uint256)", 42));
   }
 
-  function test_getApprove_throws_forInvalidToken() public {
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.getApproved(0);
+  function table_getApprove_throws_forInvalidToken(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("getApproved(uint256)", 0));
   }
 
-  function test_approve_throws_ifSenderIsNotOwner() public {
-    paidMint(alice, 0);
+  function table_approve_throws_ifSenderIsNotOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(bob);
+    paidMintNew(sut, alice, 0);
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.approve(chuck, 0);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.Unauthorized.selector, sut, bob, abi.encodeWithSignature("approve(address,uint256)", chuck, 0)
+    );
   }
 
-  function test_approve_succeeds_ifSenderIsOwner() public {
-    paidMint(alice, 0);
+  function table_approve_succeeds_ifSenderIsOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
 
     vm.expectEmit();
     emit IERC721.Approval(alice, bob, 0);
+    callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
-    nifty.approve(bob, 0);
-
-    vm.stopPrank();
-
-    assertEq(nifty.getApproved(0), bob);
+    assertEq(bob, callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0)));
   }
 
-  function test_setApprovalForAll_succeeds_andEmitApprovalForAll() public {
-    paidMint(alice, 0);
-    paidMint(alice, 1);
+  function table_setApprovalForAll_succeeds_andEmitApprovalForAll(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
+    paidMintNew(sut, alice, 1);
 
     vm.expectEmit();
     emit IERC721.ApprovalForAll(alice, bob, true);
-    nifty.setApprovalForAll(bob, true);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
 
     vm.expectEmit();
     emit IERC721.ApprovalForAll(alice, chuck, true);
-    nifty.setApprovalForAll(chuck, true);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, true));
 
     vm.expectEmit();
     emit IERC721.ApprovalForAll(alice, bob, false);
-    nifty.setApprovalForAll(bob, false);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, false));
 
     vm.expectEmit();
     emit IERC721.ApprovalForAll(alice, chuck, false);
-    nifty.setApprovalForAll(chuck, false);
-
-    vm.stopPrank();
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, false));
   }
 
-  function test_isApprovedForAll_succeeds_andProvesSeveralOperatorsSupportForOwner() public {
-    paidMint(alice, 0);
+  function table_isApprovedForAll_succeeds_andProvesSeveralOperatorsSupportForOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
 
-    nifty.setApprovalForAll(bob, true);
-    nifty.setApprovalForAll(chuck, true);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, true));
 
-    assertEq(true, nifty.isApprovedForAll(alice, bob));
-    assertEq(true, nifty.isApprovedForAll(alice, chuck));
+    assertTrue(callForBool(sut, user, abi.encodeWithSignature("isApprovedForAll(address,address)", alice, bob)));
+    assertTrue(callForBool(sut, user, abi.encodeWithSignature("isApprovedForAll(address,address)", alice, chuck)));
 
-    nifty.setApprovalForAll(bob, false);
-    nifty.setApprovalForAll(chuck, false);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, false));
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, false));
 
-    assertEq(false, nifty.isApprovedForAll(alice, bob));
-    assertEq(false, nifty.isApprovedForAll(alice, chuck));
-
-    vm.stopPrank();
-
-    assertEq(false, nifty.isApprovedForAll(alice, david));
+    assertFalse(callForBool(sut, user, abi.encodeWithSignature("isApprovedForAll(address,address)", alice, bob)));
+    assertFalse(callForBool(sut, user, abi.encodeWithSignature("isApprovedForAll(address,address)", alice, chuck)));
+    assertFalse(callForBool(sut, user, abi.encodeWithSignature("isApprovedForAll(address,address)", alice, david)));
   }
 
-  function test_approve_throws_ifSenderIsNotOperator() public {
-    paidMint(alice, 0);
+  function table_approve_throws_ifSenderIsNotOperator(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(bob);
+    paidMintNew(sut, alice, 0);
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.approve(chuck, 0);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.Unauthorized.selector, sut, bob, abi.encodeWithSignature("approve(address,uint256)", chuck, 0)
+    );
   }
 
-  function test_approve_succeeds_ifSenderisOperator() public {
-    paidMint(alice, 0);
+  function table_approve_succeeds_ifSenderisOperator(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
-    nifty.setApprovalForAll(chuck, true);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
 
-    vm.startPrank(chuck);
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, true));
 
     vm.expectEmit();
     emit IERC721.Approval(alice, bob, 0);
-
-    nifty.approve(bob, 0);
-
-    vm.stopPrank();
+    callForVoid(sut, chuck, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
   }
 
-  function test_transferFrom_throws_unsafeTransferFromIsUnsupported() public {
-    paidMint(alice, 0);
+  function table_transferFrom_throws_unsafeTransferFromIsUnsupported(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
 
-    vm.expectRevert(INifty.Unsupported.selector);
-    nifty.transferFrom(alice, bob, 0);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.Unsupported.selector,
+      sut,
+      alice,
+      abi.encodeWithSignature("transferFrom(address,address,uint256)", alice, bob, 0)
+    );
   }
 
-  function test_safeTransferFrom_throws_ifNotOwnerNorApprovedNorOperator() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_throws_ifNotOwnerNorApprovedNorOperator(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(bob);
+    paidMintNew(sut, alice, 0);
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.safeTransferFrom(bob, chuck, 0);
+    expectCallRevert(
+      INifty.Unauthorized.selector,
+      sut,
+      bob,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", bob, chuck, 0)
+    );
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.safeTransferFrom(alice, chuck, 0);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.Unauthorized.selector,
+      sut,
+      bob,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 0)
+    );
   }
 
-  function test_safeTransferFrom_throws_ifFromIsNotTheCurrentOwner() public {
-    paidMint(alice, 1);
+  function table_safeTransferFrom_throws_ifFromIsNotTheCurrentOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 1);
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.safeTransferFrom(bob, chuck, 1);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.Unauthorized.selector,
+      sut,
+      alice,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", bob, chuck, 1)
+    );
   }
 
-  function test_safeTransferFrom_throws_ifToIsZeroAddress() public {
-    paidMint(alice, 1);
+  function table_safeTransferFrom_throws_ifToIsZeroAddress(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 1);
 
-    vm.expectRevert(INifty.ZeroAddress.selector);
-    nifty.safeTransferFrom(alice, address(0), 1);
-
-    vm.stopPrank();
+    expectCallRevert(
+      INifty.ZeroAddress.selector,
+      sut,
+      alice,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, address(0), 1)
+    );
   }
 
-  function test_safeTransferFrom_throws_ifTokenIsInvalid() public {
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.safeTransferFrom(alice, bob, 0);
+  function table_safeTransferFrom_throws_ifTokenIsInvalid(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    expectCallRevert(
+      INifty.InvalidTokenId.selector,
+      sut,
+      user,
+      abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, bob, 0)
+    );
   }
 
-  function test_safeTransferFrom_succeeds_ifOwner() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_succeeds_ifOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
+    paidMintNew(sut, alice, 0);
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, bob, 0);
-    nifty.safeTransferFrom(alice, bob, 0);
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, bob, 0));
 
-    vm.stopPrank();
-
-    assertEq(0, nifty.balanceOf(alice));
-    assertEq(1, nifty.balanceOf(bob));
-    assertEq(bob, nifty.ownerOf(0));
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice)));
+    assertEq(1, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", bob)));
+    assertEq(bob, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 0)));
   }
 
-  function test_safeTransferFrom_succeeds_ifApproved() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_succeeds_ifApproved(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.approve(bob, 0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
 
-    vm.startPrank(bob);
-    vm.expectEmit();
-    emit IERC721.Transfer(alice, chuck, 0);
-    nifty.safeTransferFrom(alice, chuck, 0);
-
-    vm.stopPrank();
-
-    assertEq(0, nifty.balanceOf(alice));
-    assertEq(0, nifty.balanceOf(bob));
-    assertEq(1, nifty.balanceOf(chuck));
-    assertEq(chuck, nifty.ownerOf(0));
-  }
-
-  function test_safeTransferFrom_succeeds_ifOperator() public {
-    paidMint(alice, 0);
-    paidMint(alice, 1);
-
-    vm.startPrank(alice);
-    nifty.setApprovalForAll(bob, true);
-    vm.stopPrank();
-
-    vm.startPrank(bob);
+    callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, chuck, 0);
-    nifty.safeTransferFrom(alice, chuck, 0);
+    callForVoid(sut, bob, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 0));
+
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice)));
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", bob)));
+    assertEq(1, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", chuck)));
+    assertEq(chuck, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 0)));
+  }
+
+  function table_safeTransferFrom_succeeds_ifOperator(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    paidMintNew(sut, alice, 0);
+    paidMintNew(sut, alice, 1);
+
+    callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
+
+    vm.expectEmit();
+    emit IERC721.Transfer(alice, chuck, 0);
+    callForVoid(sut, bob, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 0));
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, chuck, 1);
-    nifty.safeTransferFrom(alice, chuck, 1);
+    callForVoid(sut, bob, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 1));
 
-    vm.stopPrank();
-
-    assertEq(0, nifty.balanceOf(alice));
-    assertEq(0, nifty.balanceOf(bob));
-    assertEq(2, nifty.balanceOf(chuck));
-    assertEq(chuck, nifty.ownerOf(0));
-    assertEq(chuck, nifty.ownerOf(1));
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice)));
+    assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", bob)));
+    assertEq(2, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", chuck)));
+    assertEq(chuck, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 0)));
+    assertEq(chuck, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 1)));
   }
 
-  function test_safeTransferFrom_succeeds_andResetApproval() public {
-    paidMint(alice, 0);
+  function table_safeTransferFrom_succeeds_andResetApproval(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    vm.startPrank(alice);
-    nifty.approve(bob, 0);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 0);
 
-    assertEq(bob, nifty.getApproved(0));
+    callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
-    vm.startPrank(alice);
-    nifty.safeTransferFrom(alice, chuck, 0);
-    vm.stopPrank();
+    assertEq(bob, callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0)));
 
-    assertEq(address(0), nifty.getApproved(0));
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 0));
+
+    assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0)));
   }
 }

@@ -8,92 +8,93 @@ import { Nifty } from "../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract ERC721Ownable2StepsTests is Test, NiftyTestUtils {
   address private bob;
   address private alice;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
     bob = makeAddr("Bob");
   }
 
-  function test_transferOwnership_throws_ifNotCurrentOwner() public {
-    vm.startPrank(alice);
-
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.transferOwnership(alice);
-
-    vm.stopPrank();
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_transferOwnership_succeeds_ifCurrentOwner() public {
-    address oldPendingOwner = nifty.pendingOwner();
+  function table_transferOwnership_throws_ifNotCurrentOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    nifty.transferOwnership(alice);
+    expectCallRevert(
+      INifty.Unauthorized.selector, sut, alice, abi.encodeWithSignature("transferOwnership(address)", alice)
+    );
+  }
+
+  function table_transferOwnership_succeeds_ifCurrentOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    address oldPendingOwner = callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()"));
+
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
 
     assertEq(address(0), oldPendingOwner);
-    assertEq(address(this), nifty.owner());
-    assertEq(alice, nifty.pendingOwner());
+    assertEq(niftyDeployer, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
+    assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()")));
   }
 
-  function test_acceptOwnership_throws_ifPendingOwnerIsNotSender() public {
-    vm.startPrank(alice);
+  function table_acceptOwnership_throws_ifPendingOwnerIsNotSender(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.acceptOwnership();
-
-    vm.stopPrank();
+    expectCallRevert(INifty.Unauthorized.selector, sut, alice, abi.encodeWithSignature("acceptOwnership()"));
   }
 
-  function test_acceptOwnership_succeeds_ifPendingOwnerIsSender() public {
-    address creatorBeforeOwnershipTransfer = nifty.creator();
+  function table_acceptOwnership_succeeds_ifPendingOwnerIsSender(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    nifty.transferOwnership(alice);
+    address creatorBeforeOwnershipTransfer = callForAddress(sut, user, abi.encodeWithSignature("creator()"));
 
-    address ownerBeforeAccept = nifty.owner();
-    address pendingOwnerBeforeAccept = nifty.pendingOwner();
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
 
-    vm.startPrank(alice);
-    nifty.acceptOwnership();
-    vm.stopPrank();
+    address ownerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
+    address pendingOwnerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()"));
 
-    assertEq(creatorBeforeOwnershipTransfer, address(this));
-    assertEq(nifty.creator(), address(this));
+    callForVoid(sut, alice, abi.encodeWithSignature("acceptOwnership()"));
 
-    assertEq(address(this), ownerBeforeAccept);
-    assertEq(nifty.owner(), alice);
+    assertEq(creatorBeforeOwnershipTransfer, niftyDeployer);
+    assertEq(nifty.creator(), niftyDeployer);
+
+    assertEq(niftyDeployer, ownerBeforeAccept);
+    assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
 
     assertEq(alice, pendingOwnerBeforeAccept);
-    assertEq(nifty.pendingOwner(), address(0));
+    assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()")));
   }
 
-  function test_renounceOwnership_throws_ifNotOwner() public {
-    vm.expectRevert(INifty.Unauthorized.selector);
+  function table_renounceOwnership_throws_ifNotOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.startPrank(alice);
-    nifty.renounceOwnership();
-    vm.stopPrank();
+    expectCallRevert(INifty.Unauthorized.selector, sut, alice, abi.encodeWithSignature("renounceOwnership()"));
   }
 
-  function test_renounceOwnership_throws_ifOwnerAndPendingOwnerSet() public {
-    nifty.transferOwnership(alice);
+  function table_renounceOwnership_throws_ifOwnerAndPendingOwnerSet(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
 
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.renounceOwnership();
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
+
+    expectCallRevert(INifty.Unauthorized.selector, sut, niftyDeployer, abi.encodeWithSignature("renounceOwnership()"));
   }
 
-  function test_renounceOwnership_succeeds_ifOwnerAndNoPendingOwner() public {
-    address oldOwner = nifty.owner();
+  function table_renounceOwnership_succeeds_ifOwnerAndNoPendingOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    nifty.transferOwnership(alice);
-    nifty.transferOwnership(address(0));
-    nifty.renounceOwnership();
+    address oldOwner = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
 
-    assertEq(oldOwner, address(this));
-    assertEq(nifty.owner(), address(0));
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", address(0)));
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("renounceOwnership()"));
+
+    assertEq(niftyDeployer, oldOwner);
+    assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("owner()")));
   }
 }

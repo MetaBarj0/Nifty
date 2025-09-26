@@ -8,71 +8,62 @@ import { Nifty } from "../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { NiftyTestUtils } from "./NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract PausableTests is Test, NiftyTestUtils {
   address private alice;
 
   function setUp() public {
-    nifty = new Nifty();
-
     alice = makeAddr("Alice");
   }
 
-  function test_pause_throws_ifNotCalledByOwner() public {
-    vm.startPrank(alice);
-
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.pause();
-
-    vm.stopPrank();
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutData();
   }
 
-  function test_resume_throws_ifNotCalledByOwner() public {
-    vm.startPrank(alice);
-
-    vm.expectRevert(INifty.Unauthorized.selector);
-    nifty.resume();
-
-    vm.stopPrank();
+  function table_pause_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
+    expectCallRevert(INifty.Unauthorized.selector, sutDatum.sut, alice, abi.encodeWithSignature("pause()"));
   }
 
-  function test_paused_returnsFalse_IfNiftyIsNotPaused() public view {
-    assertEq(false, nifty.paused());
+  function table_resume_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
+    expectCallRevert(INifty.Unauthorized.selector, sutDatum.sut, alice, abi.encodeWithSignature("resume()"));
   }
 
-  function test_paused_returnsTrue_IfNiftyIsPaused() public {
-    nifty.pause();
-
-    assertEq(true, nifty.paused());
+  function table_paused_returnsFalse_IfNiftyIsNotPaused(SUTDatum memory sutDatum) public {
+    assertFalse(callForBool(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("paused()")));
   }
 
-  function test_pause_locksMintAndBurn() public {
-    nifty.pause();
+  function table_paused_returnsTrue_IfNiftyIsPaused(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+
+    assertTrue(callForBool(sut, user, abi.encodeWithSignature("paused()")));
+  }
+
+  function table_pause_locksMintAndBurn(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
 
     vm.expectRevert(IPausable.MintAndBurnPaused.selector);
-    paidMint(alice, 123);
+    paidMintNew(sut, alice, 123);
 
-    vm.startPrank(alice);
-
-    vm.expectRevert(IPausable.MintAndBurnPaused.selector);
-    nifty.burn(0);
-
-    vm.stopPrank();
+    expectCallRevert(IPausable.MintAndBurnPaused.selector, sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
   }
 
-  function test_resume_unlocksMintAndBurn() public {
-    nifty.pause();
-    nifty.resume();
+  function table_resume_unlocksMintAndBurn(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMint(alice, 123);
-    assertEq(alice, nifty.ownerOf(123));
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("resume()"));
 
-    vm.startPrank(alice);
-    nifty.burn(123);
-    vm.stopPrank();
+    paidMintNew(sut, alice, 123);
 
-    vm.expectRevert(INifty.InvalidTokenId.selector);
-    nifty.ownerOf(123);
+    assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 123)));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 123));
+
+    expectCallRevert(INifty.InvalidTokenId.selector, sut, user, abi.encodeWithSignature("ownerOf(uint256)", 123));
   }
 }
