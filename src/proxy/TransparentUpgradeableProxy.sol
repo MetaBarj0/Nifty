@@ -7,6 +7,7 @@ import { ERC165 } from "../introspection/ERC165.sol";
 
 import { ProxyStorage } from "./ProxyStorage.sol";
 
+// TODO: Ownable2Steps admin
 contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
   // bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
   bytes32 public constant IMPLEMENTATION_SLOT = 0x89cc2b981328df209fd92734b973154b4a0db2c602160538b307a6538510f52c;
@@ -22,9 +23,9 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
 
     require(success && abi.decode(r, (bool)), InvalidImplementation());
 
-    (bool success2,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
+    (success,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
 
-    require(success2, InvalidImplementation());
+    require(success, InvalidImplementation());
 
     ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = implementationContract;
     admin_ = msg.sender;
