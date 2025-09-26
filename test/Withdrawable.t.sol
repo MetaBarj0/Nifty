@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IWithdrawable } from "../../src/interfaces/IWithdrawable.sol";
-import { INifty } from "../../src/interfaces/token/INifty.sol";
+import { INifty } from "../src/interfaces/INifty.sol";
+import { IWithdrawable } from "../src/interfaces/IWithdrawable.sol";
 
 import { Test } from "forge-std/Test.sol";
 
-import { InvalidReceiver } from "../Mocks.sol";
-import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
+import { InvalidReceiver } from "./Mocks.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract WithdrawableTests is Test, NiftyTestUtils {
   address private alice;

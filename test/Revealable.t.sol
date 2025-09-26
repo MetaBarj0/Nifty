@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IRevealable } from "../../src/interfaces/IRevealable.sol";
-import { IMintable } from "../../src/interfaces/token/IMintable.sol";
-import { INifty } from "../../src/interfaces/token/INifty.sol";
+import { INifty } from "../src/interfaces/INifty.sol";
+import { IRevealable } from "../src/interfaces/IRevealable.sol";
+import { IMintable } from "../src/interfaces/token/IMintable.sol";
 
-import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 import { Test } from "forge-std/Test.sol";
 

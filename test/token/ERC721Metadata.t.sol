@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import { IERC721Metadata } from "../../src/interfaces/token/IERC721Metadata.sol";
 
-import { INifty } from "../../src/interfaces/token/INifty.sol";
+import { INifty } from "../../src/interfaces/INifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 

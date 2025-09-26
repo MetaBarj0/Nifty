@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import { IERC721Enumerable } from "../../src/interfaces/token/IERC721Enumerable.sol";
 
-import { INifty } from "../../src/interfaces/token/INifty.sol";
+import { INifty } from "../../src/interfaces/INifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
