@@ -39,9 +39,11 @@ contract PausableTests is Test, NiftyTestUtils {
     assertTrue(callForBool(sut, user, abi.encodeWithSignature("paused()")));
   }
 
-  function table_pause_locksMintAndBurn(SUTDatum memory sutDatum) public {
+  function table_pause_emitsAndPocksMintAndBurn(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
+    vm.expectEmit();
+    emit IPausable.Paused();
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
 
     vm.expectRevert(IPausable.MintAndBurnPaused.selector);
@@ -50,10 +52,13 @@ contract PausableTests is Test, NiftyTestUtils {
     expectCallRevert(IPausable.MintAndBurnPaused.selector, sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
   }
 
-  function table_resume_unlocksMintAndBurn(SUTDatum memory sutDatum) public {
+  function table_resume_emitsAndUnlocksMintAndBurn(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+
+    vm.expectEmit();
+    emit IPausable.Resumed();
     callForVoid(sut, niftyDeployer, abi.encodeWithSignature("resume()"));
 
     paidMintNew(sut, alice, 123);

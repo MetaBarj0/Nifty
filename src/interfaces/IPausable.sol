@@ -18,4 +18,10 @@ interface IPausable {
 
   /// @notice Indicates if the minting and burning features are paused
   function paused() external view returns (bool);
+
+  /// @notice emmitted after a successful pause call
+  event Paused();
+
+  /// @notice emmitted after a successful resume call
+  event Resumed();
 }
