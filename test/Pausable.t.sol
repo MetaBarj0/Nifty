@@ -4,8 +4,6 @@ pragma solidity 0.8.30;
 import { IPausable } from "../src/interfaces/IPausable.sol";
 import { INifty } from "../src/interfaces/token/INifty.sol";
 
-import { Nifty } from "../src/token/Nifty.sol";
-
 import { Test } from "forge-std/Test.sol";
 
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
