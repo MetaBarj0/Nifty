@@ -211,15 +211,15 @@ contract Nifty is INifty, ERC165 {
     }
   }
 
-  function name() external pure override returns (string memory) {
+  function name() external pure returns (string memory) {
     return "Nifty";
   }
 
-  function symbol() external pure override returns (string memory) {
+  function symbol() external pure returns (string memory) {
     return "NFT xD";
   }
 
-  function tokenURI(uint256 tokenId) external view override returns (string memory) {
+  function tokenURI(uint256 tokenId) external view returns (string memory) {
     address tokenOwner = tokenIdToOwner[tokenId];
 
     require(tokenOwner != address(0), INifty.InvalidTokenId());
@@ -250,7 +250,7 @@ contract Nifty is INifty, ERC165 {
     pendingOwner_ = address(0);
   }
 
-  function renounceOwnership() external override {
+  function renounceOwnership() external {
     require(msg.sender == owner_ && address(0) == pendingOwner_, Unauthorized());
 
     owner_ = address(0);
