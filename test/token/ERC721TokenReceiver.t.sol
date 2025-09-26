@@ -3,8 +3,6 @@ pragma solidity 0.8.30;
 
 import { INifty } from "../../src/interfaces/token/INifty.sol";
 
-import { Nifty } from "../../src/token/Nifty.sol";
-
 import { Test } from "forge-std/Test.sol";
 
 import { FailingReceiver, InvalidReceiver, NonCompliantReceiver, ValidReceiver } from "../Mocks.sol";
