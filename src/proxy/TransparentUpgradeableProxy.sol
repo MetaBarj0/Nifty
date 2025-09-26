@@ -24,6 +24,7 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
     require(success && abi.decode(r, (bool)), InvalidImplementation());
 
     (success,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
+    emit ImplementationInitialized();
 
     require(success, InvalidImplementation());
 

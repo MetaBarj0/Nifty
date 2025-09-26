@@ -18,7 +18,6 @@ import { INifty } from "../interfaces/token/INifty.sol";
 
 import { ERC165 } from "../introspection/ERC165.sol";
 
-// TODO: @inheritdoc for all
 contract Nifty is INifty, ERC165 {
   mapping(uint256 => address) private tokenIdToOwner;
   mapping(address => uint256) private balances;

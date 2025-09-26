@@ -43,6 +43,10 @@ contract ProxyTests is Test {
   }
 
   function test_constructor_initializesAdminAndImplementation_forAdminAccess() public {
+    vm.expectEmit();
+    emit ITransparentUpgradeableProxy.ImplementationInitialized();
+    proxy = new TransparentUpgradeableProxy(address(implementation), abi.encode(42));
+
     assertEq(address(this), proxy.admin());
     assertEq(address(implementation), proxy.implementation());
   }
