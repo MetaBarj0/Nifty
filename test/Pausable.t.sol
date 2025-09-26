@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
+import { INifty } from "../src/interfaces/INifty.sol";
 import { IPausable } from "../src/interfaces/IPausable.sol";
-import { INifty } from "../src/interfaces/token/INifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 

@@ -17,7 +17,7 @@ import { IERC721TokenReceiver } from "../interfaces/token/IERC721TokenReceiver.s
 
 import { IERC165 } from "../interfaces/introspection/IERC165.sol";
 
-import { INifty } from "../interfaces/token/INifty.sol";
+import { INifty } from "../interfaces/INifty.sol";
 
 import { ERC165 } from "../introspection/ERC165.sol";
 
