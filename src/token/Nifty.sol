@@ -45,6 +45,8 @@ contract Nifty is INifty, ERC165 {
     owner_ = implementationOwner;
   }
 
+  /// @dev Allow to use this contract as standalone, that is without a
+  ///  transparent proxy
   constructor() {
     owner_ = msg.sender;
   }
