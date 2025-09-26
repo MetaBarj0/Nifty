@@ -198,14 +198,14 @@ contract Nifty is INifty, ERC165 {
   function tryReceive(address operator, address from, address to, uint256 tokenId, bytes memory data) private {
     if (to.code.length > 0) {
       try IERC721TokenReceiver(to).onERC721Received(operator, from, tokenId, data) returns (bytes4 result) {
-        require(result == IERC721TokenReceiver.onERC721Received.selector, InvalidReceiver(to));
+        require(result == IERC721TokenReceiver.onERC721Received.selector, InvalidReceiver());
       } catch (bytes memory reason) {
         if (reason.length > 0) {
           assembly ("memory-safe") {
             revert(add(reason, 0x20), mload(reason))
           }
         } else {
-          revert InvalidReceiver(to);
+          revert InvalidReceiver();
         }
       }
     }
