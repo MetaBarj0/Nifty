@@ -158,22 +158,26 @@ contract Nifty is INifty, ERC165 {
       Unauthorized()
     );
 
-    uint256 tokenIndex = tokenIdToAllTokensIndex[tokenId];
+    uint256 tokenToBurnIndex = tokenIdToAllTokensIndex[tokenId];
     uint256 lastTokenIndex = allTokens.length - 1;
     uint256 lastTokenId = allTokens[lastTokenIndex];
-    allTokens[tokenIndex] = lastTokenId;
+
+    allTokens[tokenToBurnIndex] = lastTokenId;
+    tokenIdToAllTokensIndex[lastTokenId] = tokenToBurnIndex;
+
     allTokens.pop();
     delete tokenIdToAllTokensIndex[tokenId];
-    tokenIdToAllTokensIndex[lastTokenId] = tokenIndex;
 
     uint256 ownerTokenIndex = ownerTokenIdToTokenIndex[tokenOwner][tokenId];
     uint256 lastOwnerTokenIndex = balances[tokenOwner] - 1;
     uint256 lastOwnerTokenId = ownerTokenIndexToTokenId[tokenOwner][lastOwnerTokenIndex];
+
     ownerTokenIndexToTokenId[tokenOwner][ownerTokenIndex] = lastOwnerTokenId;
-    delete ownerTokenIndexToTokenId[tokenOwner][lastOwnerTokenIndex];
     ownerTokenIdToTokenIndex[tokenOwner][lastOwnerTokenId] = ownerTokenIndex;
 
+    delete ownerTokenIndexToTokenId[tokenOwner][lastOwnerTokenIndex];
     delete tokenIdToOwner[tokenId];
+
     balances[tokenOwner]--;
 
     emit IERC721.Transfer(msg.sender, address(0), tokenId);
@@ -201,6 +205,8 @@ contract Nifty is INifty, ERC165 {
       try IERC721TokenReceiver(to).onERC721Received(operator, from, tokenId, data) returns (bytes4 result) {
         require(result == IERC721TokenReceiver.onERC721Received.selector, InvalidReceiver());
       } catch (bytes memory reason) {
+        /// @dev Allow to forward the specific error thrown in the invalid
+        ///  receiver (see tests)
         if (reason.length > 0) {
           assembly ("memory-safe") {
             revert(add(reason, 0x20), mload(reason))
@@ -269,6 +275,8 @@ contract Nifty is INifty, ERC165 {
       bytes(baseURI_).length != 0 && baseURICommitment_ == 0 && block.timestamp >= withdrawTimeLockEnd_,
       IWithdrawable.WithdrawLocked()
     );
+
+    emit IWithdrawable.Withdrawn(owner_, address(this).balance);
 
     (bool success,) = payable(owner_).call{ value: address(this).balance }("");
 
