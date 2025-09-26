@@ -51,6 +51,5 @@ interface INifty is
   /// @dev specifically thrown in a safeTransferFrom call that fail to call a
   ///  compliant onERC721Received function as defined in the
   ///  IERC721TokenReceiver interface
-  /// @param to the faulty receiver address
-  error InvalidReceiver(address to);
+  error InvalidReceiver();
 }
