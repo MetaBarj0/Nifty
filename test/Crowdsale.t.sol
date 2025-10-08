@@ -43,7 +43,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     address sut = sutDatum.sut;
 
     expectCallRevert(
-      ICrowdsaleable.Unauthorized.selector,
+      INifty.Unauthorized.selector,
       sut,
       alice,
       abi.encodeWithSignature("setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 0, 0, 0, 0, 0)
@@ -106,7 +106,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     expectCallRevert(
       ICrowdsaleable.CannotSetupAfterSaleBegin.selector,
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature(
         "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
         crowdsaleData.rate + 10,
@@ -206,37 +206,9 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     assertEq(0, returnedTokenId);
   }
 
-  // FIX: disctinct withdraww token from withdraw funds, user should ALWAYS be
-  //      able to withdraw their token
   function table_withdrawToken_throws_forUnsetupCrowdsale(SUTDatum memory sutDatum) public {
     expectCallRevert(
       ICrowdsaleable.CannotWithdrawTokenBeforeSetupCrowdsale.selector,
-      sutDatum.sut,
-      alice,
-      abi.encodeWithSignature("withdrawToken(uint256)", 0)
-    );
-  }
-
-  function table_withdrawToken_throws_ifWithdrawPeriodHasNotStarted(SUTDatum memory sutDatum) public {
-    ICrowdsaleable.CrowdsaleData memory crowdsale = setupTestCrowdsale(sutDatum.sut);
-    vm.deal(alice, crowdsale.rate);
-
-    expectCallRevert(
-      ICrowdsaleable.CannotWithdrawTokenBeforeWithdrawPeriodHasBegun.selector,
-      sutDatum.sut,
-      alice,
-      abi.encodeWithSignature("withdrawToken(uint256)", 0)
-    );
-  }
-
-  function table_withdrawToken_throws_ifWithdrawPeriodHasEnded(SUTDatum memory sutDatum) public {
-    ICrowdsaleable.CrowdsaleData memory crowdsale = setupTestCrowdsale(sutDatum.sut);
-    vm.deal(alice, crowdsale.rate);
-
-    vm.warp(crowdsale.endWithdrawDate + 2 hours);
-
-    expectCallRevert(
-      ICrowdsaleable.CannotWithdrawTokenAfterWithdrawPeriodHasEnded.selector,
       sutDatum.sut,
       alice,
       abi.encodeWithSignature("withdrawToken(uint256)", 0)
@@ -286,11 +258,71 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     callForVoid(sut, alice, abi.encodeWithSignature("withdrawToken(uint256)", tokenId));
   }
 
+  function table_withdrawFunds_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
+    expectCallRevert(INifty.Unauthorized.selector, sutDatum.sut, alice, abi.encodeWithSignature("withdrawFunds()"));
+  }
+
+  function table_withdrawFunds_throws_ifCrowdsaleIsNotSetup(SUTDatum memory sutDatum) public {
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawFundsBeforeSetupCrowdsale.selector,
+      sutDatum.sut,
+      crowdsaleOwner,
+      abi.encodeWithSignature("withdrawFunds()")
+    );
+  }
+
+  function table_withdrawFunds_throws_ifWithdrawPeriodHasNotBegun(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    setupTestCrowdsale(sut);
+
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawFundsBeforeWithdrawPeriodHasBegun.selector,
+      sut,
+      crowdsaleOwner,
+      abi.encodeWithSignature("withdrawFunds()")
+    );
+  }
+
+  function table_withdrawFunds_throws_ifWithdrawPeriodHasEnded(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    setupTestCrowdsaleAndEndWithdrawPeriod(sut);
+
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawFundsAfterWithdrawPeriodHasEnded.selector,
+      sut,
+      crowdsaleOwner,
+      abi.encodeWithSignature("withdrawFunds()")
+    );
+  }
+
+  function table_withdrawFunds_emits_onSuccess(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    ICrowdsaleable.CrowdsaleData memory crowdsale = setupTestCrowdsaleAndBeginSalePeriod(sut);
+    vm.deal(alice, 1 ether);
+
+    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
+    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
+    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
+
+    vm.warp(crowdsale.endWithdrawDate - 1);
+
+    uint256 sutBalanceBeforeWithdrawal = sut.balance;
+    uint256 crowdsaleOwnerBalanceBeforeWithdrawal = crowdsaleOwner.balance;
+    callForVoid(sut, crowdsaleOwner, abi.encodeWithSignature("withdrawFunds()"));
+    uint256 sutBalanceAfterWithdrawal = sut.balance;
+
+    assertEq(sutBalanceBeforeWithdrawal, crowdsaleOwner.balance - crowdsaleOwnerBalanceBeforeWithdrawal);
+    assertEq(0, sutBalanceAfterWithdrawal);
+  }
+
   function expectSetupCrowdsaleRevertWithWrongSaleDates(address sut, uint256 beginSale, uint256 endSale) private {
     expectCallRevert(
       ICrowdsaleable.WrongSaleDates.selector,
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature("setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 0, beginSale, endSale, 0, 0)
     );
   }
@@ -301,7 +333,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     expectCallRevert(
       ICrowdsaleable.WrongRate.selector,
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature(
         "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", rate, now_ + 1 days, now_ + 2 days, 0, 0
       )
@@ -311,7 +343,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
   function setupTestCrowdsaleWith(address sut, ICrowdsaleable.CrowdsaleData memory crowdsaleData) private {
     callForVoid(
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature(
         "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
         crowdsaleData.rate,
@@ -335,7 +367,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
 
     callForVoid(
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature(
         "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
         crowdsaleData.rate,
@@ -357,6 +389,14 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     return crowdsaleData;
   }
 
+  function setupTestCrowdsaleAndEndWithdrawPeriod(address sut) private returns (ICrowdsaleable.CrowdsaleData memory) {
+    ICrowdsaleable.CrowdsaleData memory crowdsaleData = setupTestCrowdsale(sut);
+
+    vm.warp(crowdsaleData.endWithdrawDate + 1 hours);
+
+    return crowdsaleData;
+  }
+
   function expectSetupCrowdsaleRevertWithWrongWithdrawDates(
     address sut,
     uint256 beginSale,
@@ -367,7 +407,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     expectCallRevert(
       ICrowdsaleable.WrongWithdrawDates.selector,
       sut,
-      crowdSaleOwner,
+      crowdsaleOwner,
       abi.encodeWithSignature(
         "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 10, beginSale, endSale, beginWithdraw, endWithdraw
       )

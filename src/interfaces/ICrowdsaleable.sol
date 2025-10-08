@@ -18,8 +18,10 @@ interface ICrowdsaleable {
     ///  period
     uint256 endSaleDate;
     /// @notice begin of the withdraw period. Must be after the end sale date
+    ///         it is for funds withdrawal not bought tokens withdrawal
     uint256 beginWithdrawDate;
     /// @notice end of the withdraw period. Must be after the withdraw period
+    ///         it is for funds withdrawal not bought tokens withdrawal
     uint256 endWithdrawDate;
   }
 
@@ -64,8 +66,6 @@ interface ICrowdsaleable {
    * @notice allow a valid user to withdraw a previously bought token
    * @dev MUST throw if setupCrowdsale has not been successfully called
    *      beforehand
-   *      MUST throw if withdraw is attempted outside of setup withdraw date
-   *      range
    *      MUST throw if the user has not bought the specified token
    *      MUST throw if token transfer fails
    *      MUST emit a TokenWithdrawn event on success
@@ -74,10 +74,17 @@ interface ICrowdsaleable {
   function withdrawToken(uint256 tokenId) external;
 
   /*
-   * @notice thrown in case of unauthorized access in a ICrowdsaleable function
-   *         call
+   * @notice allow to withdraw funds from this contract.
+   *         Funds are collected for each token bought with the payForToken
+   *         function calls regarding how the crowdsale is setup.
+   *         Usually, only the owner can withdraw funds, or a set of registered
+   *         address (not supported yet)
+   * @dev MUST throw if withdraw is attempted outside of setup withdraw date
+   *      range
+   *      MUST throw if the transfer of funds fails
+   *      MUST emit a FundsWithdrawn event on success
    */
-  error Unauthorized(); // TODO: do not redefine INifty.Unauthorized
+  function withdrawFunds() external;
 
   /*
    * @notice Thrown when setupCrowdsale is called with incorrect sale dates
@@ -129,16 +136,22 @@ interface ICrowdsaleable {
   error CannotWithdrawTokenBeforeSetupCrowdsale();
 
   /*
-   * @notice thrown when attempting to withdraw tokens before the withdraw
-   *         period has begun
+   * @notice Thrown if the owner attempts to withdraw funds before a successful
+   *         call to setupCrowdsale
    */
-  error CannotWithdrawTokenBeforeWithdrawPeriodHasBegun();
+  error CannotWithdrawFundsBeforeSetupCrowdsale();
 
   /*
-   * @notice thrown when attempting to withdraw tokens after the withdraw
+   * @notice thrown when attempting to withdraw funds before the withdraw
+   *         period has begun
+   */
+  error CannotWithdrawFundsBeforeWithdrawPeriodHasBegun();
+
+  /*
+   * @notice thrown when attempting to withdraw funds after the withdraw
    *         period has ended
    */
-  error CannotWithdrawTokenAfterWithdrawPeriodHasEnded();
+  error CannotWithdrawFundsAfterWithdrawPeriodHasEnded();
 
   /*
    * @notice emitted after a successfull crowdsale setup
@@ -159,4 +172,12 @@ interface ICrowdsaleable {
    * @param tokenId the withdrawn token identifier
    */
   event WithdrawnToken(address indexed owner, uint256 tokenId);
+
+  /*
+   * @notice Emitted after a succesful withdrawal of this contract balance to
+   *         the actual owner of this crowdsale contract
+   * @param owner the beneficiary of the withdraw
+   * @param amount the withdrawn amount
+   */
+  event FundsWithdrawn(address owner, uint256 amount);
 }

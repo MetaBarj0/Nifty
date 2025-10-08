@@ -2,10 +2,14 @@
 pragma solidity 0.8.30;
 
 import { ICrowdsaleable } from "./interfaces/ICrowdsaleable.sol";
+
+import { INifty } from "./interfaces/INifty.sol";
 import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
 import { IERC721 } from "./interfaces/token/IERC721.sol";
+
+import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
 import { ERC165 } from "./introspection/ERC165.sol";
 
@@ -17,6 +21,7 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
 
   constructor(address tokenContract) {
     owner_ = msg.sender;
+    // TODO: ensure tokenContract is IERC721 and IMintable and IERC721Enumerable
     tokenContract_ = tokenContract;
   }
 
@@ -38,7 +43,7 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
   {
     uint256 now_ = block.timestamp;
 
-    require(msg.sender == owner_, ICrowdsaleable.Unauthorized());
+    require(msg.sender == owner_, INifty.Unauthorized());
     require(beginSale > now_ && endSale > beginSale, ICrowdsaleable.WrongSaleDates());
     require(rate > 0, WrongRate());
     require(beginWithdraw > endSale && endWithdraw > beginWithdraw, WrongWithdrawDates());
@@ -66,21 +71,28 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
     require(block.timestamp >= crowdsaleData_.beginSaleDate, CannotPayForTokenBeforeSalePeriodHasBegun());
     require(block.timestamp < crowdsaleData_.endSaleDate, CannotPayForTokenAfterSalePeriodHasEnded());
 
-    boughtTokenToBuyer_[0] = msg.sender;
+    uint256 nextTokenId = IERC721Enumerable(tokenContract_).totalSupply();
 
-    emit PaidForToken(msg.sender, 0);
+    boughtTokenToBuyer_[nextTokenId] = msg.sender;
 
-    IMintable(tokenContract_).mint{ value: crowdsaleData_.rate }(address(this), 0);
+    emit PaidForToken(msg.sender, nextTokenId);
 
-    return 0;
+    IMintable(tokenContract_).mint{ value: crowdsaleData_.rate }(address(this), nextTokenId);
+
+    return nextTokenId;
   }
 
   function withdrawToken(uint256 tokenId) external {
     require(crowdsaleData_.rate > 0, CannotWithdrawTokenBeforeSetupCrowdsale());
-    require(block.timestamp >= crowdsaleData_.beginWithdrawDate, CannotWithdrawTokenBeforeWithdrawPeriodHasBegun());
-    require(block.timestamp < crowdsaleData_.endWithdrawDate, CannotWithdrawTokenAfterWithdrawPeriodHasEnded());
-    require(msg.sender == boughtTokenToBuyer_[tokenId], Unauthorized());
+    require(msg.sender == boughtTokenToBuyer_[tokenId], INifty.Unauthorized());
 
     IERC721(tokenContract_).safeTransferFrom(address(this), msg.sender, tokenId);
+  }
+
+  function withdrawFunds() external {
+    require(msg.sender == owner_, INifty.Unauthorized());
+    require(crowdsaleData_.rate > 0, CannotWithdrawFundsBeforeSetupCrowdsale());
+    require(block.timestamp >= crowdsaleData_.beginWithdrawDate, CannotWithdrawFundsBeforeWithdrawPeriodHasBegun());
+    require(block.timestamp < crowdsaleData_.endWithdrawDate, CannotWithdrawFundsAfterWithdrawPeriodHasEnded());
   }
 }
