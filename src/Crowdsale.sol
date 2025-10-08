@@ -39,11 +39,11 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
     uint256 now_ = block.timestamp;
 
     require(msg.sender == owner_, ICrowdsaleable.Unauthorized());
-    require(beginSale > now_ && endSale > now_ && beginSale < endSale, ICrowdsaleable.WrongSaleDates());
+    require(beginSale > now_ && endSale > beginSale, ICrowdsaleable.WrongSaleDates());
     require(rate > 0, WrongRate());
     require(beginWithdraw > endSale && endWithdraw > beginWithdraw, WrongWithdrawDates());
     require(
-      crowdsaleData_.beginSaleDate == 0 || block.timestamp < crowdsaleData_.beginSaleDate,
+      crowdsaleData_.beginSaleDate == 0 || now_ < crowdsaleData_.beginSaleDate,
       ICrowdsaleable.CannotSetupAfterSaleBegin()
     );
 
