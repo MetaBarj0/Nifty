@@ -27,4 +27,16 @@ interface IMintable {
   /// @param tokenId the identifier of the token to mint. A token with this
   ///  identifier must not already exist.
   function mint(address to, uint256 tokenId) external payable;
+
+  /// @notice authorize or revoke the authorization of an address to mint token
+  ///  of the implementing contract
+  /// @dev MUST throw if not called by owner
+  /// @param minter the address to authorize or revoke
+  /// @param authorized true to authorize the mint, false to revoke this right
+  function authorizeMinter(address minter, bool authorized) external;
+
+  /// @notice emmitted after each successfull call to authorizeMinter
+  /// @param minter the address to authorize or revoke
+  /// @param authorized true to authorize the mint, false to revoke this right
+  event MinterAuthorized(address indexed minter, bool authorized);
 }

@@ -1,0 +1,491 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.30;
+
+import { ICrowdsaleable } from "../src/interfaces/ICrowdsaleable.sol";
+import { INifty } from "../src/interfaces/INifty.sol";
+
+import { IERC721 } from "../src/interfaces/token/IERC721.sol";
+import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
+
+import { FailingReceiver } from "./Mocks.sol";
+import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
+
+import { Test } from "forge-std/Test.sol";
+
+contract CrowdsaleTests is Test, NiftyTestUtils {
+  address private alice;
+
+  function setUp() public {
+    alice = makeAddr("Alice");
+  }
+
+  function fixtureSutDatum() public view returns (SUTDatum[] memory) {
+    return getSutDataForCrowdsale();
+  }
+
+  function table_introspection_isValidERC721TokenReceiver(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+    bytes4 expectedRet = IERC721TokenReceiver.onERC721Received.selector;
+
+    bytes4 ret = callForBytes4(
+      sut,
+      user,
+      abi.encodeWithSignature("onERC721Received(address,address,uint256,bytes)", address(0), address(0), 0, "")
+    );
+
+    assertEq(expectedRet, ret);
+    assertCallTrue(
+      sut, user, abi.encodeWithSignature("supportsInterface(bytes4)", type(IERC721TokenReceiver).interfaceId)
+    );
+  }
+
+  function table_setupCrowdsale_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    expectCallRevert(
+      ICrowdsaleable.Unauthorized.selector,
+      sut,
+      alice,
+      abi.encodeWithSignature("setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 0, 0, 0, 0, 0)
+    );
+  }
+
+  function table_setupCrowdsale_throws_withOwnerCallingWithWrongSaleDates(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+
+    expectSetupCrowdsaleRevertWithWrongSaleDates(sutDatum.sut, 0, 0);
+    expectSetupCrowdsaleRevertWithWrongSaleDates(sutDatum.sut, now_, now_);
+    expectSetupCrowdsaleRevertWithWrongSaleDates(sutDatum.sut, now_ + 2 days, now_ + 1 days);
+  }
+
+  function table_setupCrowdsale_throws_withOwnerCallingWithWrongRate(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+    uint256 now_ = block.timestamp;
+
+    expectCallRevert(
+      ICrowdsaleable.WrongRate.selector,
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 0, now_ + 1 days, now_ + 2 days, 0, 0
+      )
+    );
+  }
+
+  function table_setupCrowdsale_throws_withOwnerCallingWithWrongWithdrawDates(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+
+    expectSetupCrowdsaleRevertWithWrongWithdrawDates(sutDatum.sut, now_ + 1 days, now_ + 2 days, 0, 0);
+    expectSetupCrowdsaleRevertWithWrongWithdrawDates(sutDatum.sut, now_ + 1 days, now_ + 2 days, 1, 2);
+    expectSetupCrowdsaleRevertWithWrongWithdrawDates(sutDatum.sut, now_ + 1 days, now_ + 2 days, 2, 1);
+    expectSetupCrowdsaleRevertWithWrongWithdrawDates(
+      sutDatum.sut, now_ + 1 days, now_ + 2 days, now_ + 2 days - 1 hours, 1
+    );
+  }
+
+  function table_setupCrowdsale_emits_withCorrectCrowdsaleData(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+    uint256 now_ = block.timestamp;
+
+    ICrowdsaleable.CrowdsaleData memory expectedCrowdsaleData;
+    expectedCrowdsaleData.rate = 10;
+    expectedCrowdsaleData.beginSaleDate = now_ + 1 days;
+    expectedCrowdsaleData.endSaleDate = now_ + 2 days;
+    expectedCrowdsaleData.beginWithdrawDate = now_ + 3 days;
+    expectedCrowdsaleData.endWithdrawDate = now_ + 4 days;
+
+    vm.expectEmit();
+    emit ICrowdsaleable.CrowdsaleSetup(expectedCrowdsaleData);
+    callForVoid(
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        10,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    ICrowdsaleable.CrowdsaleData memory crowdsaleData =
+      callForCrowdsaleData(sut, user, abi.encodeWithSignature("getCrowdsaleData()"));
+
+    assertEq(10, crowdsaleData.rate);
+    assertEq(now_ + 1 days, crowdsaleData.beginSaleDate);
+    assertEq(now_ + 2 days, crowdsaleData.endSaleDate);
+    assertEq(now_ + 3 days, crowdsaleData.beginWithdrawDate);
+    assertEq(now_ + 4 days, crowdsaleData.endWithdrawDate);
+  }
+
+  function table_setupCrowdsale_throws_whenCalledAfterSaleHasBegun(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+    uint256 now_ = block.timestamp;
+
+    callForVoid(
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        10,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 1 days + 12 hours);
+    now_ = block.timestamp;
+
+    expectCallRevert(
+      ICrowdsaleable.CannotSetupAfterSaleBegin.selector,
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        10,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+  }
+
+  function table_setupCrowdsale_emits_whenCalledAgainBeforeSaleStarts(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+    uint256 now_ = block.timestamp;
+
+    ICrowdsaleable.CrowdsaleData memory expectedCrowdsaleData;
+    expectedCrowdsaleData.rate = 10;
+    expectedCrowdsaleData.beginSaleDate = now_ + 1 days;
+    expectedCrowdsaleData.endSaleDate = now_ + 2 days;
+    expectedCrowdsaleData.beginWithdrawDate = now_ + 3 days;
+    expectedCrowdsaleData.endWithdrawDate = now_ + 4 days;
+
+    vm.expectEmit();
+    emit ICrowdsaleable.CrowdsaleSetup(expectedCrowdsaleData);
+    callForVoid(
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        10,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 20 hours);
+
+    vm.expectEmit();
+    emit ICrowdsaleable.CrowdsaleSetup(expectedCrowdsaleData);
+    callForVoid(
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        10,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+  }
+
+  function table_payForToken_throws_forUnsetupCrowdsale(SUTDatum memory sutDatum) public {
+    vm.deal(alice, 500 gwei);
+
+    expectPaidCallRevert(
+      ICrowdsaleable.CannotPayForTokenBeforeSetupCrowdsale.selector,
+      500 gwei,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("payForToken()")
+    );
+  }
+
+  function table_payForToken_throws_forInsufficientAmount(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 400 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    expectPaidCallRevert(
+      ICrowdsaleable.InsufficientFunds.selector, 400 gwei, sutDatum.sut, alice, abi.encodeWithSignature("payForToken()")
+    );
+  }
+
+  function table_payForToken_throws_ifSalePeriodHasNotStarted(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    expectPaidCallRevert(
+      ICrowdsaleable.CannotPayForTokenBeforeSalePeriodHasBegun.selector,
+      500 gwei,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("payForToken()")
+    );
+  }
+
+  function table_payForToken_throws_ifSalePeriodHasEnded(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 2 days + 1 hours);
+
+    expectPaidCallRevert(
+      ICrowdsaleable.CannotPayForTokenAfterSalePeriodHasEnded.selector,
+      500 gwei,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("payForToken()")
+    );
+  }
+
+  function table_payForToken_emitsAndReturnsTokenId_onSuccess(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 1 days + 1 hours);
+
+    vm.expectEmit();
+    emit ICrowdsaleable.PaidForToken(alice, 0);
+
+    uint256 returnedTokenId =
+      paidCallForUint256(sutDatum.sut, alice, 500 gwei, abi.encodeWithSignature("payForToken()"));
+
+    assertEq(0, returnedTokenId);
+  }
+
+  function table_withdrawToken_throws_forUnsetupCrowdsale(SUTDatum memory sutDatum) public {
+    vm.deal(alice, 500 gwei);
+
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawTokenBeforeSetupCrowdsale.selector,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("withdrawToken(uint256)", 0)
+    );
+  }
+
+  function table_withdrawToken_throws_ifWithdrawPeriodHasNotStarted(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawTokenBeforeWithdrawPeriodHasBegun.selector,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("withdrawToken(uint256)", 0)
+    );
+  }
+
+  function table_withdrawToken_throws_ifWithdrawPeriodHasEnded(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 4 days + 1 hours);
+
+    expectCallRevert(
+      ICrowdsaleable.CannotWithdrawTokenAfterWithdrawPeriodHasEnded.selector,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature("withdrawToken(uint256)", 0)
+    );
+  }
+
+  function table_withdrawToken_throws_ifUserHasNotBoughtIt(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 3 days + 1 hours);
+
+    expectCallRevert(
+      INifty.Unauthorized.selector, sutDatum.sut, alice, abi.encodeWithSignature("withdrawToken(uint256)", 0)
+    );
+  }
+
+  function table_withdrawToken_throws_ifTransferFails(SUTDatum memory sutDatum) public {
+    uint256 now_ = block.timestamp;
+    address failingReceiver = address(new FailingReceiver());
+
+    vm.deal(failingReceiver, 500 gwei);
+
+    callForVoid(
+      sutDatum.sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 1 days + 1 hours);
+    paidCallForUint256(sutDatum.sut, failingReceiver, 500 gwei, abi.encodeWithSignature("payForToken()"));
+
+    skip(now_ + 2 days);
+
+    expectCallRevert(
+      FailingReceiver.OhShit.selector,
+      sutDatum.sut,
+      failingReceiver,
+      abi.encodeWithSignature("withdrawToken(uint256)", 0)
+    );
+  }
+
+  function table_withdrawToken_emitsAndTransferTokenToBuyer_onSuccess(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+    uint256 now_ = block.timestamp;
+    vm.deal(alice, 500 gwei);
+
+    callForVoid(
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)",
+        500 gwei,
+        now_ + 1 days,
+        now_ + 2 days,
+        now_ + 3 days,
+        now_ + 4 days
+      )
+    );
+
+    skip(now_ + 1 days + 1 hours);
+
+    uint256 tokenId = paidCallForUint256(sut, alice, 500 gwei, abi.encodeWithSignature("payForToken()"));
+
+    skip(now_ + 2 days);
+
+    vm.expectEmit();
+    emit IERC721.Transfer(sut, alice, tokenId);
+
+    callForVoid(sut, alice, abi.encodeWithSignature("withdrawToken(uint256)", tokenId));
+  }
+
+  function expectSetupCrowdsaleRevertWithWrongSaleDates(address sut, uint256 beginSale, uint256 endSale) private {
+    expectCallRevert(
+      ICrowdsaleable.WrongSaleDates.selector,
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature("setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 0, beginSale, endSale, 0, 0)
+    );
+  }
+
+  function expectSetupCrowdsaleRevertWithWrongWithdrawDates(
+    address sut,
+    uint256 beginSale,
+    uint256 endSale,
+    uint256 beginWithdraw,
+    uint256 endWithdraw
+  ) private {
+    expectCallRevert(
+      ICrowdsaleable.WrongWithdrawDates.selector,
+      sut,
+      crowdSaleOwner,
+      abi.encodeWithSignature(
+        "setupCrowdsale(uint256,uint256,uint256,uint256,uint256)", 10, beginSale, endSale, beginWithdraw, endWithdraw
+      )
+    );
+  }
+}

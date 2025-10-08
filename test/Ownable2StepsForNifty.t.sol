@@ -18,7 +18,7 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_transferOwnership_throws_ifNotCurrentOwner(SUTDatum memory sutDatum) public {
@@ -36,10 +36,10 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
 
     vm.expectEmit();
     emit IOwnable2Steps.OwnerChanging(alice);
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("transferOwnership(address)", alice));
 
     assertEq(address(0), oldPendingOwner);
-    assertEq(niftyDeployer, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
+    assertEq(niftyOwner, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
     assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()")));
   }
 
@@ -54,7 +54,7 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
 
     address ownerBeforeOwnershipTransfer = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
 
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("transferOwnership(address)", alice));
 
     address ownerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
     address pendingOwnerBeforeAccept = callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()"));
@@ -63,8 +63,8 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
     emit IOwnable2Steps.OwnerChanged(ownerBeforeOwnershipTransfer, alice);
     callForVoid(sut, alice, abi.encodeWithSignature("acceptOwnership()"));
 
-    assertEq(ownerBeforeOwnershipTransfer, niftyDeployer);
-    assertEq(niftyDeployer, ownerBeforeAccept);
+    assertEq(ownerBeforeOwnershipTransfer, niftyOwner);
+    assertEq(niftyOwner, ownerBeforeAccept);
     assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("owner()")));
     assertEq(alice, pendingOwnerBeforeAccept);
     assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("pendingOwner()")));
@@ -79,9 +79,9 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
   function table_renounceOwnership_throws_ifOwnerAndPendingOwnerSet(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("transferOwnership(address)", alice));
 
-    expectCallRevert(INifty.Unauthorized.selector, sut, niftyDeployer, abi.encodeWithSignature("renounceOwnership()"));
+    expectCallRevert(INifty.Unauthorized.selector, sut, niftyOwner, abi.encodeWithSignature("renounceOwnership()"));
   }
 
   function table_renounceOwnership_succeeds_ifOwnerAndNoPendingOwner(SUTDatum memory sutDatum) public {
@@ -89,14 +89,14 @@ contract Ownable2StepsTests is Test, NiftyTestUtils {
 
     address oldOwner = callForAddress(sut, user, abi.encodeWithSignature("owner()"));
 
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", alice));
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("transferOwnership(address)", address(0)));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("transferOwnership(address)", alice));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("transferOwnership(address)", address(0)));
 
     vm.expectEmit();
     emit IOwnable2Steps.OwnerChanged(oldOwner, address(0));
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("renounceOwnership()"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("renounceOwnership()"));
 
-    assertEq(niftyDeployer, oldOwner);
+    assertEq(niftyOwner, oldOwner);
     assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("owner()")));
   }
 }

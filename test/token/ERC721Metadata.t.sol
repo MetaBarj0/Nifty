@@ -17,7 +17,7 @@ contract ERC721MetadataTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_name_succeeds_afterDeploy(SUTDatum memory sutDatum) public {
@@ -42,7 +42,8 @@ contract ERC721MetadataTests is Test, NiftyTestUtils {
   function table_tokenURI_throws_forBurntToken(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
 

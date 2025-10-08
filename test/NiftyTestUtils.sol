@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { Test } from "forge-std/Test.sol";
+import { ICrowdsaleable } from "../src/interfaces/ICrowdsaleable.sol";
+import { INifty } from "../src/interfaces/INifty.sol";
+import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
 
+import { Crowdsale } from "../src/Crowdsale.sol";
+
+import { Nifty } from "../src/Nifty.sol";
 import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
-import { Nifty } from "../src/token/Nifty.sol";
+
+import { Test } from "forge-std/Test.sol";
 
 struct SUTDatum {
   address sut;
@@ -12,34 +18,69 @@ struct SUTDatum {
 }
 
 abstract contract NiftyTestUtils is Test {
-  Nifty internal nifty;
-  TransparentUpgradeableProxy internal proxy;
+  INifty internal nifty;
+  ITransparentUpgradeableProxy internal niftyProxy;
+  ICrowdsaleable internal crowdsale;
+  ITransparentUpgradeableProxy internal crowdsaleProxy;
 
-  address internal niftyDeployer;
-  address internal proxyUser;
+  address internal niftyOwner;
+  address internal crowdSaleOwner;
+  address internal niftyProxyUser;
+  address internal crowdsaleProxyUser;
 
   constructor() {
-    niftyDeployer = makeAddr("niftyDeployer");
-    proxyUser = makeAddr("proxyUser");
+    niftyOwner = makeAddr("niftyOwner");
+    niftyProxyUser = makeAddr("niftyProxyUser");
+    crowdSaleOwner = makeAddr("crowdSaleOwner");
+    crowdsaleProxyUser = makeAddr("crowdsaleProxyUser");
 
-    vm.startPrank(niftyDeployer);
+    vm.startPrank(niftyOwner);
     nifty = new Nifty();
     vm.stopPrank();
 
-    proxy = new TransparentUpgradeableProxy(address(nifty), abi.encode(niftyDeployer));
+    vm.startPrank(crowdSaleOwner);
+    crowdsale = new Crowdsale(address(nifty));
+    vm.stopPrank();
+
+    niftyProxy = new TransparentUpgradeableProxy(address(nifty), abi.encode(niftyOwner));
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdSaleOwner, address(nifty)));
+
+    vm.startPrank(niftyOwner);
+    nifty.authorizeMinter(address(crowdsale), true);
+    nifty.authorizeMinter(address(crowdsaleProxy), true);
+    vm.stopPrank();
   }
 
-  function getSutData() internal view returns (SUTDatum[] memory) {
+  function getSutDataForNifty() internal view returns (SUTDatum[] memory) {
     SUTDatum[] memory sutData = new SUTDatum[](2);
     sutData[0].sut = address(nifty);
-    sutData[0].user = niftyDeployer;
-    sutData[1].sut = address(proxy);
-    sutData[1].user = proxyUser;
+    sutData[0].user = niftyOwner;
+    sutData[1].sut = address(niftyProxy);
+    sutData[1].user = niftyProxyUser;
 
     return sutData;
   }
 
-  function paidMintNew(address sut, address to, uint256 tokenId) internal {
+  function getSutDataForCrowdsale() internal view returns (SUTDatum[] memory) {
+    SUTDatum[] memory sutData = new SUTDatum[](2);
+    sutData[0].sut = address(crowdsale);
+    sutData[0].user = crowdSaleOwner;
+    sutData[1].sut = address(crowdsaleProxy);
+    sutData[1].user = crowdsaleProxyUser;
+
+    return sutData;
+  }
+
+  function authorizeMinter(address sut, address minter, bool authorized) internal {
+    vm.startPrank(niftyOwner);
+
+    (bool success,) = sut.call(abi.encodeWithSignature("authorizeMinter(address,bool)", minter, authorized));
+    require(success);
+
+    vm.stopPrank();
+  }
+
+  function paidMint(address sut, address to, uint256 tokenId) internal {
     vm.deal(to, 500 gwei);
 
     // the to account pays for his token
@@ -71,6 +112,16 @@ abstract contract NiftyTestUtils is Test {
     vm.startPrank(sender);
     vm.expectRevert(errorSelector);
     (bool success,) = sut.call(callData);
+    assertTrue(success);
+    vm.stopPrank();
+  }
+
+  function expectPaidCallRevert(bytes4 errorSelector, uint256 value, address sut, address sender, bytes memory callData)
+    internal
+  {
+    vm.startPrank(sender);
+    vm.expectRevert(errorSelector);
+    (bool success,) = sut.call{ value: value }(callData);
     assertTrue(success);
     vm.stopPrank();
   }
@@ -110,5 +161,41 @@ abstract contract NiftyTestUtils is Test {
     bytes memory data = justCall(sut, sender, callData);
 
     return abi.decode(data, (bool));
+  }
+
+  function callForBytes4(address sut, address sender, bytes memory callData) internal returns (bytes4) {
+    bytes memory data = justCall(sut, sender, callData);
+
+    return abi.decode(data, (bytes4));
+  }
+
+  function callForCrowdsaleData(address sut, address sender, bytes memory callData)
+    internal
+    returns (ICrowdsaleable.CrowdsaleData memory)
+  {
+    bytes memory data = justCall(sut, sender, callData);
+
+    return abi.decode(data, (ICrowdsaleable.CrowdsaleData));
+  }
+
+  function justPaidCall(address sut, address sender, uint256 value, bytes memory callData)
+    private
+    returns (bytes memory)
+  {
+    vm.startPrank(sender);
+    (bool success, bytes memory data) = sut.call{ value: value }(callData);
+    require(success);
+    vm.stopPrank();
+
+    return data;
+  }
+
+  function paidCallForUint256(address sut, address sender, uint256 value, bytes memory callData)
+    internal
+    returns (uint256)
+  {
+    bytes memory data = justPaidCall(sut, sender, value, callData);
+
+    return abi.decode(data, (uint256));
   }
 }

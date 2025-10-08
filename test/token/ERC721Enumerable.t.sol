@@ -21,7 +21,7 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_totalSupply_returns0AtContractInitialization(SUTDatum memory sutDatum) public {
@@ -31,9 +31,13 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_totalSupply_succeeds_atReturningMintedTokenAmount(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
-    paidMintNew(sut, bob, 1);
-    paidMintNew(sut, chuck, 2);
+    authorizeMinter(sut, alice, true);
+    authorizeMinter(sut, bob, true);
+    authorizeMinter(sut, chuck, true);
+
+    paidMint(sut, alice, 0);
+    paidMint(sut, bob, 1);
+    paidMint(sut, chuck, 2);
 
     assertEq(callForUint256(sut, user, abi.encodeWithSignature("totalSupply()")), 3);
   }
@@ -41,8 +45,10 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_totalSupply_succeeds_atReturningMintedAndBurntTokenAmount(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+
+    paidMint(sut, alice, 0);
+    paidMint(sut, alice, 1);
 
     uint256 balanceBeforeBurn = callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice));
 
@@ -60,7 +66,8 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
     vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 0));
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     vm.expectRevert(IERC721Enumerable.IndexOutOfBound.selector);
     callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 1));
@@ -69,8 +76,11 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_tokenByIndex_succeeds_forMintedTokens(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 42);
-    paidMintNew(sut, bob, 43);
+    authorizeMinter(sut, alice, true);
+    authorizeMinter(sut, bob, true);
+
+    paidMint(sut, alice, 42);
+    paidMint(sut, bob, 43);
 
     assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 0)));
     assertEq(43, callForUint256(sut, user, abi.encodeWithSignature("tokenByIndex(uint256)", 1)));
@@ -79,9 +89,12 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_tokenByIndex_throws_forABurntTokenAtSpecifiedIndex(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 42);
-    paidMintNew(sut, bob, 43);
-    paidMintNew(sut, alice, 44);
+    authorizeMinter(sut, alice, true);
+    authorizeMinter(sut, bob, true);
+
+    paidMint(sut, alice, 42);
+    paidMint(sut, bob, 43);
+    paidMint(sut, alice, 44);
 
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 42));
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 44));
@@ -107,10 +120,13 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_tokenOfOwnerByIndex_succeeds_forDifferentOwners(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 10);
-    paidMintNew(sut, alice, 11);
-    paidMintNew(sut, bob, 12);
-    paidMintNew(sut, bob, 13);
+    authorizeMinter(sut, alice, true);
+    authorizeMinter(sut, bob, true);
+
+    paidMint(sut, alice, 10);
+    paidMint(sut, alice, 11);
+    paidMint(sut, bob, 12);
+    paidMint(sut, bob, 13);
 
     assertEq(10, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
     assertEq(11, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
@@ -121,15 +137,19 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   function table_tokenOfOwnerByIndex_succeeds_forDifferentOwnersWhoBurn(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 10);
-    paidMintNew(sut, alice, 11);
-    paidMintNew(sut, alice, 12);
-    paidMintNew(sut, bob, 13);
-    paidMintNew(sut, bob, 14);
-    paidMintNew(sut, bob, 15);
-    paidMintNew(sut, chuck, 16);
-    paidMintNew(sut, chuck, 17);
-    paidMintNew(sut, chuck, 18);
+    authorizeMinter(sut, alice, true);
+    authorizeMinter(sut, bob, true);
+    authorizeMinter(sut, chuck, true);
+
+    paidMint(sut, alice, 10);
+    paidMint(sut, alice, 11);
+    paidMint(sut, alice, 12);
+    paidMint(sut, bob, 13);
+    paidMint(sut, bob, 14);
+    paidMint(sut, bob, 15);
+    paidMint(sut, chuck, 16);
+    paidMint(sut, chuck, 17);
+    paidMint(sut, chuck, 18);
 
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 10));
     callForVoid(sut, bob, abi.encodeWithSignature("burn(uint256)", 14));

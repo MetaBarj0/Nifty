@@ -3,22 +3,22 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import { IOwnable2Steps } from "../interfaces/IOwnable2Steps.sol";
+import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 
-import { IPausable } from "../interfaces/IPausable.sol";
-import { IRevealable } from "../interfaces/IRevealable.sol";
-import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
+import { IPausable } from "./interfaces/IPausable.sol";
+import { IRevealable } from "./interfaces/IRevealable.sol";
+import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 
-import { IERC721 } from "../interfaces/token/IERC721.sol";
-import { IERC721Enumerable } from "../interfaces/token/IERC721Enumerable.sol";
-import { IERC721Metadata } from "../interfaces/token/IERC721Metadata.sol";
-import { IERC721TokenReceiver } from "../interfaces/token/IERC721TokenReceiver.sol";
+import { IERC721 } from "./interfaces/token/IERC721.sol";
+import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
+import { IERC721Metadata } from "./interfaces/token/IERC721Metadata.sol";
+import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
 
-import { IERC165 } from "../interfaces/introspection/IERC165.sol";
+import { IERC165 } from "./interfaces/introspection/IERC165.sol";
 
-import { INifty } from "../interfaces/INifty.sol";
+import { INifty } from "./interfaces/INifty.sol";
 
-import { ERC165 } from "../introspection/ERC165.sol";
+import { ERC165 } from "./introspection/ERC165.sol";
 
 contract Nifty is INifty, ERC165 {
   mapping(uint256 => address) private tokenIdToOwner;
@@ -28,6 +28,7 @@ contract Nifty is INifty, ERC165 {
   mapping(uint256 tokenId => uint256 tokensIndex) private tokenIdToAllTokensIndex;
   mapping(address owner => mapping(uint256 index => uint256 tokenId)) private ownerTokenIndexToTokenId;
   mapping(address owner => mapping(uint256 tokenId => uint256 tokenIndex)) private ownerTokenIdToTokenIndex;
+  mapping(address minter => bool authorized) private authorizedMinters_;
 
   uint256[] private allTokens;
 
@@ -92,6 +93,8 @@ contract Nifty is INifty, ERC165 {
     tokenIdToOwner[tokenId] = to;
     delete tokenIdToApproved[tokenId];
 
+    // BUG: owner token index are not updated
+
     tryReceive(msg.sender, from, to, tokenId, data);
 
     emit IERC721.Transfer(from, to, tokenId);
@@ -127,11 +130,20 @@ contract Nifty is INifty, ERC165 {
     return ownerToOperatorApproval[tokenOwner][operator];
   }
 
+  function authorizeMinter(address minter, bool authorized) external {
+    require(msg.sender == owner_ && minter != owner_, Unauthorized());
+
+    authorizedMinters_[minter] = authorized;
+
+    emit MinterAuthorized(minter, authorized);
+  }
+
   function mint(address to, uint256 tokenId) external payable {
     require(!paused_, MintAndBurnPaused());
     require(to != address(0), InvalidAddress());
     require(tokenIdToOwner[tokenId] == address(0), TokenAlreadyMinted());
     require(msg.value == 500 gwei, WrongPaymentValue());
+    require(authorizedMinters_[msg.sender], Unauthorized());
 
     tokenIdToOwner[tokenId] = to;
 

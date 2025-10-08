@@ -23,7 +23,7 @@ contract ERC721Tests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_balanceOf_returns0_forUserHavingNoToken(SUTDatum memory sutDatum) public {
@@ -35,8 +35,10 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_balanceOf_succeeds_returnsUserBalance(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
+    authorizeMinter(sut, alice, true);
+
     for (uint256 index = 0; index < 42; index++) {
-      paidMintNew(sut, alice, index);
+      paidMint(sut, alice, index);
     }
 
     assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("balanceOf(address)", alice)));
@@ -57,7 +59,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_approve_throws_ifSenderIsNotOwner(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     expectCallRevert(
       INifty.Unauthorized.selector, sut, bob, abi.encodeWithSignature("approve(address,uint256)", chuck, 0)
@@ -67,7 +70,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_approve_succeeds_ifSenderIsOwner(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     vm.expectEmit();
     emit IERC721.Approval(alice, bob, 0);
@@ -79,8 +83,10 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_setApprovalForAll_succeeds_andEmitApprovalForAll(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+
+    paidMint(sut, alice, 0);
+    paidMint(sut, alice, 1);
 
     vm.expectEmit();
     emit IERC721.ApprovalForAll(alice, bob, true);
@@ -102,7 +108,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_isApprovedForAll_succeeds_andProvesSeveralOperatorsSupportForOwner(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
     callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, true));
@@ -121,7 +128,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_approve_throws_ifSenderIsNotOperator(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     expectCallRevert(
       INifty.Unauthorized.selector, sut, bob, abi.encodeWithSignature("approve(address,uint256)", chuck, 0)
@@ -131,7 +139,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_approve_succeeds_ifSenderisOperator(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", chuck, true));
 
@@ -143,7 +152,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_transferFrom_throws_unsafeTransferFromIsUnsupported(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     expectCallRevert(
       INifty.Unsupported.selector,
@@ -156,7 +166,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_throws_ifNotOwnerNorApprovedNorOperator(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     expectCallRevert(
       INifty.Unauthorized.selector,
@@ -176,7 +187,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_throws_ifFromIsNotTheCurrentOwner(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 1);
 
     expectCallRevert(
       INifty.Unauthorized.selector,
@@ -189,7 +201,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_throws_ifToIsZeroAddress(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 1);
 
     expectCallRevert(
       INifty.ZeroAddress.selector,
@@ -213,7 +226,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_succeeds_ifOwner(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, bob, 0);
@@ -227,7 +241,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_succeeds_ifApproved(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
@@ -244,8 +259,10 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_succeeds_ifOperator(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+
+    paidMint(sut, alice, 0);
+    paidMint(sut, alice, 1);
 
     callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
 
@@ -267,7 +284,8 @@ contract ERC721Tests is Test, NiftyTestUtils {
   function table_safeTransferFrom_succeeds_andResetApproval(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
