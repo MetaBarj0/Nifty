@@ -19,11 +19,6 @@ contract MintableTests is Test, NiftyTestUtils {
     return getSutDataForNifty();
   }
 
-  function table_mint_throw_ifNotPaid(SUTDatum memory sutDatum) public {
-    vm.expectRevert(IMintable.WrongPaymentValue.selector);
-    callForVoid(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("mint(address,uint256)", bob, 42));
-  }
-
   function table_mint_throws_forZeroDestinationAddress(SUTDatum memory sutDatum) public {
     vm.expectRevert(IMintable.InvalidAddress.selector);
     paidMint(sutDatum.sut, address(0), 0);

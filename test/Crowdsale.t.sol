@@ -300,20 +300,25 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
   function table_withdrawFunds_emits_onSuccess(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    ICrowdsaleable.CrowdsaleData memory crowdsale = setupTestCrowdsaleAndBeginSalePeriod(sut);
-    vm.deal(alice, 1 ether);
+    ICrowdsaleable.CrowdsaleData memory crowdsaleData = setupTestCrowdsaleAndBeginSalePeriod(sut);
+    vm.deal(alice, 1500 gwei);
 
-    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
-    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
-    paidCallForUint256(sut, alice, crowdsale.rate, abi.encodeWithSignature("payForToken()"));
+    paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));
+    paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));
+    paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));
 
-    vm.warp(crowdsale.endWithdrawDate - 1);
+    vm.warp(crowdsaleData.endWithdrawDate - 1);
 
     uint256 sutBalanceBeforeWithdrawal = sut.balance;
     uint256 crowdsaleOwnerBalanceBeforeWithdrawal = crowdsaleOwner.balance;
+
+    vm.expectEmit();
+    emit ICrowdsaleable.FundsWithdrawn(crowdsaleOwner, sutBalanceBeforeWithdrawal);
     callForVoid(sut, crowdsaleOwner, abi.encodeWithSignature("withdrawFunds()"));
+
     uint256 sutBalanceAfterWithdrawal = sut.balance;
 
+    assertLt(0, crowdsaleOwner.balance);
     assertEq(sutBalanceBeforeWithdrawal, crowdsaleOwner.balance - crowdsaleOwnerBalanceBeforeWithdrawal);
     assertEq(0, sutBalanceAfterWithdrawal);
   }
