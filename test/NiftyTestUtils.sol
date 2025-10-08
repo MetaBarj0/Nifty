@@ -24,26 +24,26 @@ abstract contract NiftyTestUtils is Test {
   ITransparentUpgradeableProxy internal crowdsaleProxy;
 
   address internal niftyOwner;
-  address internal crowdSaleOwner;
+  address internal crowdsaleOwner;
   address internal niftyProxyUser;
   address internal crowdsaleProxyUser;
 
   constructor() {
     niftyOwner = makeAddr("niftyOwner");
     niftyProxyUser = makeAddr("niftyProxyUser");
-    crowdSaleOwner = makeAddr("crowdSaleOwner");
+    crowdsaleOwner = makeAddr("crowdsaleOwner");
     crowdsaleProxyUser = makeAddr("crowdsaleProxyUser");
 
     vm.startPrank(niftyOwner);
     nifty = new Nifty();
     vm.stopPrank();
 
-    vm.startPrank(crowdSaleOwner);
+    vm.startPrank(crowdsaleOwner);
     crowdsale = new Crowdsale(address(nifty));
     vm.stopPrank();
 
     niftyProxy = new TransparentUpgradeableProxy(address(nifty), abi.encode(niftyOwner));
-    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdSaleOwner, address(nifty)));
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, address(nifty)));
 
     vm.startPrank(niftyOwner);
     nifty.authorizeMinter(address(crowdsale), true);
@@ -64,7 +64,7 @@ abstract contract NiftyTestUtils is Test {
   function getSutDataForCrowdsale() internal view returns (SUTDatum[] memory) {
     SUTDatum[] memory sutData = new SUTDatum[](2);
     sutData[0].sut = address(crowdsale);
-    sutData[0].user = crowdSaleOwner;
+    sutData[0].user = crowdsaleOwner;
     sutData[1].sut = address(crowdsaleProxy);
     sutData[1].user = crowdsaleProxyUser;
 
