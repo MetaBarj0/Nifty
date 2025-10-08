@@ -77,7 +77,7 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
 
     emit PaidForToken(msg.sender, nextTokenId);
 
-    IMintable(tokenContract_).mint{ value: crowdsaleData_.rate }(address(this), nextTokenId);
+    IMintable(tokenContract_).mint(address(this), nextTokenId);
 
     return nextTokenId;
   }
@@ -94,5 +94,11 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
     require(crowdsaleData_.rate > 0, CannotWithdrawFundsBeforeSetupCrowdsale());
     require(block.timestamp >= crowdsaleData_.beginWithdrawDate, CannotWithdrawFundsBeforeWithdrawPeriodHasBegun());
     require(block.timestamp < crowdsaleData_.endWithdrawDate, CannotWithdrawFundsAfterWithdrawPeriodHasEnded());
+
+    uint256 balance = address(this).balance;
+
+    emit FundsWithdrawn(owner_, balance);
+
+    payable(owner_).transfer(balance);
   }
 }

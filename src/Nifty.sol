@@ -142,7 +142,6 @@ contract Nifty is INifty, ERC165 {
     require(!paused_, MintAndBurnPaused());
     require(to != address(0), InvalidAddress());
     require(tokenIdToOwner[tokenId] == address(0), TokenAlreadyMinted());
-    require(msg.value == 500 gwei, WrongPaymentValue());
     require(authorizedMinters_[msg.sender], Unauthorized());
 
     tokenIdToOwner[tokenId] = to;

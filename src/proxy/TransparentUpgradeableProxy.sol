@@ -7,7 +7,7 @@ import { ERC165 } from "../introspection/ERC165.sol";
 
 import { ProxyStorage } from "./ProxyStorage.sol";
 
-// TODO: Ownable2Steps admin
+// TODO: Ownable2Steps admin and changeImplementation
 contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
   // bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
   bytes32 public constant IMPLEMENTATION_SLOT = 0x89cc2b981328df209fd92734b973154b4a0db2c602160538b307a6538510f52c;
