@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
-import { Nifty } from "../src/token/Nifty.sol";
+import { Nifty } from "../src/Nifty.sol";
 
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";

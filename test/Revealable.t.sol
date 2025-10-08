@@ -17,13 +17,14 @@ contract RevealableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_tokenURI_isEmpty_beforeCommitRevealPropertiesCall(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     assertEq("", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
   }
@@ -39,7 +40,7 @@ contract RevealableTests is Test, NiftyTestUtils {
     address sut = sutDatum.sut;
 
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("commitRevealProperties(uint256,string,uint256)", 0, "", 0));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("commitRevealProperties(uint256,string,uint256)", 0, "", 0));
   }
 
   function table_commitRevealProperties_throws_ifAllTokenURIBeforeRevealIsEmpty(SUTDatum memory sutDatum) public {
@@ -48,7 +49,7 @@ contract RevealableTests is Test, NiftyTestUtils {
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature("commitRevealProperties(uint256,string,uint256)", uint256(keccak256("an/address")), "", 0)
     );
   }
@@ -59,7 +60,7 @@ contract RevealableTests is Test, NiftyTestUtils {
     vm.expectRevert(IRevealable.InvalidRevealProperties.selector);
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature(
         "commitRevealProperties(uint256,string,uint256)",
         uint256(keccak256("revealed/address")),
@@ -72,7 +73,8 @@ contract RevealableTests is Test, NiftyTestUtils {
   function table_commitRevealProperties_succeeds_ifCalledWithCorrectParameterSet(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     assertEq("", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
 
@@ -82,7 +84,7 @@ contract RevealableTests is Test, NiftyTestUtils {
     emit IRevealable.RevealPropertiesCommitted(commitment, "before/reveal/address", 1 days);
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature(
         "commitRevealProperties(uint256,string,uint256)", commitment, "before/reveal/address", 1 days
       )
@@ -101,7 +103,7 @@ contract RevealableTests is Test, NiftyTestUtils {
 
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature(
         "commitRevealProperties(uint256,string,uint256)",
         uint256(keccak256("correct/base/address")),
@@ -111,18 +113,19 @@ contract RevealableTests is Test, NiftyTestUtils {
     );
 
     vm.expectRevert(IRevealable.WrongPreimage.selector, 2);
-    callForVoid(sutDatum.sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", ""));
-    callForVoid(sutDatum.sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", "incorrect/base/address"));
+    callForVoid(sutDatum.sut, niftyOwner, abi.encodeWithSignature("reveal(string)", ""));
+    callForVoid(sutDatum.sut, niftyOwner, abi.encodeWithSignature("reveal(string)", "incorrect/base/address"));
   }
 
   function table_reveal_succeeds_AndReturnFinalURIWithCorrectProperties(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature(
         "commitRevealProperties(uint256,string,uint256)",
         uint256(keccak256("correct/base/address")),
@@ -135,7 +138,7 @@ contract RevealableTests is Test, NiftyTestUtils {
 
     vm.expectEmit();
     emit IRevealable.Revealed("correct/base/address");
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("reveal(string)", "correct/base/address"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("reveal(string)", "correct/base/address"));
 
     assertEq("correct/base/address/0.json", callForString(sut, user, abi.encodeWithSignature("tokenURI(uint256)", 0)));
   }
@@ -153,7 +156,7 @@ contract RevealableTests is Test, NiftyTestUtils {
 
     callForVoid(
       sut,
-      niftyDeployer,
+      niftyOwner,
       abi.encodeWithSignature(
         "commitRevealProperties(uint256,string,uint256)",
         uint256(keccak256("correct/base/address")),

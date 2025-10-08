@@ -16,7 +16,7 @@ contract PausableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_pause_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
@@ -34,7 +34,7 @@ contract PausableTests is Test, NiftyTestUtils {
   function table_paused_returnsTrue_IfNiftyIsPaused(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("pause()"));
 
     assertTrue(callForBool(sut, user, abi.encodeWithSignature("paused()")));
   }
@@ -44,10 +44,10 @@ contract PausableTests is Test, NiftyTestUtils {
 
     vm.expectEmit();
     emit IPausable.Paused();
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("pause()"));
 
     vm.expectRevert(IPausable.MintAndBurnPaused.selector);
-    paidMintNew(sut, alice, 123);
+    paidMint(sut, alice, 123);
 
     expectCallRevert(IPausable.MintAndBurnPaused.selector, sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
   }
@@ -55,13 +55,14 @@ contract PausableTests is Test, NiftyTestUtils {
   function table_resume_emitsAndUnlocksMintAndBurn(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("pause()"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("pause()"));
 
     vm.expectEmit();
     emit IPausable.Resumed();
-    callForVoid(sut, niftyDeployer, abi.encodeWithSignature("resume()"));
+    callForVoid(sut, niftyOwner, abi.encodeWithSignature("resume()"));
 
-    paidMintNew(sut, alice, 123);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 123);
 
     assertEq(alice, callForAddress(sut, user, abi.encodeWithSignature("ownerOf(uint256)", 123)));
 

@@ -19,7 +19,7 @@ contract BurnableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_burn_throw_forNotMintedToken(SUTDatum calldata sutDatum) public {
@@ -31,7 +31,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_throws_forExistingTokenNotOwnedBySender(SUTDatum calldata sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sutDatum.sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sutDatum.sut, alice, 0);
 
     expectCallRevert(INifty.Unauthorized.selector, sut, user, abi.encodeWithSignature("burn(uint256)", 0));
   }
@@ -39,8 +40,9 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_decreasingTotalSupply(SUTDatum calldata sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
-    paidMintNew(sut, alice, 1);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
+    paidMint(sut, alice, 1);
 
     uint256 supplyBeforeBurn = callForUint256(sut, user, abi.encodeWithSignature("totalSupply()"));
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 1));
@@ -52,7 +54,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_atRemovingTokenOwnership(SUTDatum calldata sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sutDatum.sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sutDatum.sut, alice, 0);
 
     address token0OwnerBeforeBurn = callForAddress(sut, alice, abi.encodeWithSignature("ownerOf(uint256)", 0));
 
@@ -65,7 +68,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_atDecreasingOwnerBalance(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
     uint256 balanceBeforeBurn = callForUint256(sut, alice, abi.encodeWithSignature("balanceOf(address)", alice));
 
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
@@ -77,7 +81,9 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_atRemovingBurntTokenApproval(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+
+    paidMint(sut, alice, 0);
     callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
     address approvedBeforeBurn = callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0));
     callForVoid(sut, alice, abi.encodeWithSignature("burn(uint256)", 0));
@@ -89,7 +95,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_ifQueriedByApprovedAddress(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("approve(address,uint256)", bob, 0));
 
@@ -101,7 +108,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_succeeds_ifQueriedByOperator(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 0);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
 
     callForVoid(sut, alice, abi.encodeWithSignature("setApprovalForAll(address,bool)", bob, true));
 
@@ -113,7 +121,8 @@ contract BurnableTests is Test, NiftyTestUtils {
   function table_burn_emitsTransferEvent_ifQueriedByOwner(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
-    paidMintNew(sut, alice, 3);
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 3);
 
     vm.expectEmit();
     emit IERC721.Transfer(alice, address(0), 3);

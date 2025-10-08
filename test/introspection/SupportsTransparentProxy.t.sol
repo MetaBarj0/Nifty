@@ -11,7 +11,7 @@ import { Test } from "forge-std/Test.sol";
 
 contract ERC165Tests is Test, NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function table_supports_interface(SUTDatum calldata sutDatum) public {

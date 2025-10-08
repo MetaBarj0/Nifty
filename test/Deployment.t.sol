@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
+import { Nifty } from "../src/Nifty.sol";
 import { IOwnable2Steps } from "../src/interfaces/IOwnable2Steps.sol";
-import { Nifty } from "../src/token/Nifty.sol";
 
 import { Test } from "forge-std/Test.sol";
 
@@ -11,7 +11,7 @@ import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract DeploymentTests is Test, NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutData();
+    return getSutDataForNifty();
   }
 
   function test_deploy_emitsAnOwnerChangedEvent() public {
@@ -27,6 +27,6 @@ contract DeploymentTests is Test, NiftyTestUtils {
   }
 
   function table_deploy_ownerIsSet(SUTDatum calldata sutDatum) public {
-    assertEq(niftyDeployer, callForAddress(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("owner()")));
+    assertEq(niftyOwner, callForAddress(sutDatum.sut, sutDatum.user, abi.encodeWithSignature("owner()")));
   }
 }
