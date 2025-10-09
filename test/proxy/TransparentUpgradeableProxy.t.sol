@@ -23,7 +23,6 @@ contract ProxyTests is Test {
 
   function test_constructor_throws_withZeroImplementation() public {
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
-
     new TransparentUpgradeableProxy(address(0), "");
   }
 
@@ -31,7 +30,6 @@ contract ProxyTests is Test {
     NotInitializableImplementation notInitializableImplementation = new NotInitializableImplementation();
 
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
-
     new TransparentUpgradeableProxy(address(notInitializableImplementation), "");
   }
 
@@ -39,7 +37,6 @@ contract ProxyTests is Test {
     FailingInitializableImplementation failingInitializableImplementation = new FailingInitializableImplementation();
 
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
-
     new TransparentUpgradeableProxy(address(failingInitializableImplementation), "");
   }
 
