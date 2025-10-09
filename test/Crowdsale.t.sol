@@ -3,13 +3,16 @@ pragma solidity 0.8.30;
 
 import { ICrowdsaleable } from "../src/interfaces/ICrowdsaleable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
+import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
 
 import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
-import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
 import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
-import { FailingReceiver, NonPayableContract } from "./Mocks.sol";
+import { Crowdsale } from "../src/Crowdsale.sol";
+import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
+
+import { FailingReceiver, NonPayableContract, NotERC165, NotERC165Too, NotERC721, NotMintable } from "./Mocks.sol";
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 import { Test } from "forge-std/Test.sol";
@@ -23,6 +26,28 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
     return getSutDataForCrowdsale();
+  }
+
+  function test_introspection_tokenContractSupportsAllRequiredInterfaces() public {
+    address notERC165 = address(new NotERC165());
+    address notERC165Too = address(new NotERC165Too());
+    address notERC721 = address(new NotERC721());
+    address notMintable = address(new NotMintable());
+
+    vm.expectRevert(ICrowdsaleable.WrongTokenContract.selector);
+    crowdsale = new Crowdsale(notERC165);
+
+    vm.expectRevert(ICrowdsaleable.WrongTokenContract.selector);
+    crowdsale = new Crowdsale(notERC165Too);
+
+    vm.expectRevert(ICrowdsaleable.WrongTokenContract.selector);
+    crowdsale = new Crowdsale(notERC721);
+
+    vm.expectRevert(ICrowdsaleable.WrongTokenContract.selector);
+    crowdsale = new Crowdsale(notMintable);
+
+    crowdsale = new Crowdsale(address(nifty));
+    assertNotEq(address(0), crowdsale.tokenContract());
   }
 
   function table_introspection_supportsAllRequiredInterfaces(SUTDatum memory sutDatum) public {

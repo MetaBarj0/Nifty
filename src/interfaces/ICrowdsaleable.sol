@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /*
- * @notice Interface defining a crowd sale feature
+ * @notice Interface defining a crowd sale feature.
  */
 interface ICrowdsaleable {
   /*
@@ -24,6 +24,13 @@ interface ICrowdsaleable {
     ///         it is for funds withdrawal not bought tokens withdrawal
     uint256 endWithdrawDate;
   }
+
+  /*
+   * @notice gives the address of the underlying token contract.
+   * @dev this underlying token contract should be set at initialization level.
+   * @return the address of the underlying contract
+   */
+  function tokenContract() external view returns (address);
 
   /*
    * @notice setup the crowd sale. This is mandatory before opening the
@@ -85,6 +92,13 @@ interface ICrowdsaleable {
    *      MUST emit a FundsWithdrawn event on success
    */
   function withdrawFunds() external;
+
+  /*
+   * @notice thrown at construction or initialization when an incorrect token
+   *         contract is passed as argument either in the constructor or in the
+   *         initialize function.
+   */
+  error WrongTokenContract();
 
   /*
    * @notice Thrown when setupCrowdsale is called with incorrect sale dates

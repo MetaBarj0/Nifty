@@ -7,7 +7,9 @@ import { Ownable2Steps } from "./Ownable2Steps.sol";
 
 import { IPausable } from "./interfaces/IPausable.sol";
 import { IRevealable } from "./interfaces/IRevealable.sol";
+
 import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
+import { IMintable } from "./interfaces/token/IMintable.sol";
 
 import { IERC721 } from "./interfaces/token/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
@@ -54,7 +56,7 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
     return interfaceId == type(IERC721).interfaceId || interfaceId == type(IERC721Enumerable).interfaceId
       || interfaceId == type(IERC721Metadata).interfaceId || interfaceId == type(IInitializable).interfaceId
-      || super.supportsInterface(interfaceId);
+      || interfaceId == type(IMintable).interfaceId || super.supportsInterface(interfaceId);
   }
 
   function balanceOf(address tokenOwner) external view returns (uint256) {
