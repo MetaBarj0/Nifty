@@ -12,5 +12,5 @@ interface IInitializable {
    * @dev delegatecall this function within the proxy constructor to ensure the
    *      proxy state is initialized as the implementation contract is.
    */
-  function initialize(bytes calldata data) external;
+  function initialize(bytes memory data) external;
 }

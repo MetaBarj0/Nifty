@@ -9,6 +9,8 @@ import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
 import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
+import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
+
 import { Crowdsale } from "../src/Crowdsale.sol";
 import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
 
@@ -48,6 +50,25 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
 
     crowdsale = new Crowdsale(address(nifty));
     assertNotEq(address(0), crowdsale.tokenContract());
+  }
+
+  function test_introspection_tokenContractSupportsAllRequiredInterfacesThroughProxy() public {
+    address notERC165 = address(new NotERC165());
+    address notERC165Too = address(new NotERC165Too());
+    address notERC721 = address(new NotERC721());
+    address notMintable = address(new NotMintable());
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, notERC165));
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, notERC165Too));
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, notERC721));
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, notMintable));
   }
 
   function table_introspection_supportsAllRequiredInterfaces(SUTDatum memory sutDatum) public {
