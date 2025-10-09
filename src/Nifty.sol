@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
+import { Ownable2Steps } from "./Ownable2Steps.sol";
 
 import { IPausable } from "./interfaces/IPausable.sol";
 import { IRevealable } from "./interfaces/IRevealable.sol";
@@ -20,7 +20,7 @@ import { INifty } from "./interfaces/INifty.sol";
 
 import { ERC165 } from "./introspection/ERC165.sol";
 
-contract Nifty is INifty, ERC165 {
+contract Nifty is INifty, ERC165, Ownable2Steps {
   mapping(uint256 => address) private tokenIdToOwner;
   mapping(address => uint256) private balances;
   mapping(uint256 => address) private tokenIdToApproved;
@@ -31,9 +31,6 @@ contract Nifty is INifty, ERC165 {
   mapping(address minter => bool authorized) private authorizedMinters_;
 
   uint256[] private allTokens;
-
-  address private owner_;
-  address private pendingOwner_;
 
   string private baseURI_;
   uint256 private baseURICommitment_;
@@ -50,9 +47,7 @@ contract Nifty is INifty, ERC165 {
 
   /// @dev Allow to use this contract as standalone, that is without a
   ///  transparent proxy
-  constructor() {
-    owner_ = msg.sender;
-
+  constructor() Ownable2Steps(msg.sender) {
     emit OwnerChanged(address(0), owner_);
   }
 
@@ -245,39 +240,6 @@ contract Nifty is INifty, ERC165 {
     return baseURICommitment_ != 0 || (baseURICommitment_ == 0 && bytes(baseURI_).length == 0)
       ? baseURI_
       : string.concat(baseURI_, "/", Strings.toString(tokenId), ".json");
-  }
-
-  function owner() external view returns (address) {
-    return owner_;
-  }
-
-  function pendingOwner() external view returns (address) {
-    return pendingOwner_;
-  }
-
-  function transferOwnership(address newOwner) external {
-    require(owner_ == msg.sender, Unauthorized());
-
-    pendingOwner_ = newOwner;
-
-    emit IOwnable2Steps.OwnerChanging(pendingOwner_);
-  }
-
-  function acceptOwnership() external {
-    require(msg.sender == pendingOwner_, Unauthorized());
-
-    emit IOwnable2Steps.OwnerChanged(owner_, pendingOwner_);
-
-    owner_ = pendingOwner_;
-    pendingOwner_ = address(0);
-  }
-
-  function renounceOwnership() external {
-    require(msg.sender == owner_ && address(0) == pendingOwner_, Unauthorized());
-
-    emit IOwnable2Steps.OwnerChanged(owner_, address(0));
-
-    owner_ = address(0);
   }
 
   function commitRevealProperties(

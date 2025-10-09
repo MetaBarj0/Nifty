@@ -5,6 +5,7 @@ import { ITransparentUpgradeableProxy } from "../../src/interfaces/proxy/ITransp
 import { TransparentUpgradeableProxy } from "../../src/proxy/TransparentUpgradeableProxy.sol";
 
 import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "../Mocks.sol";
+
 import { Test } from "forge-std/Test.sol";
 
 contract ProxyTests is Test {
@@ -51,14 +52,21 @@ contract ProxyTests is Test {
     assertEq(address(implementation), proxy.implementation());
   }
 
-  function test_admin_returnsActualAdmin_ifAdmin() public {
+  function test_admin_returnsProxyAdmin_ifAdmin() public {
     (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
 
     assertTrue(success);
     assertEq(address(this), abi.decode(data, (address)));
   }
 
-  function test_implementation_returnsActualImplementation_ifAdmin() public {
+  function test_admin_returnsImplementationAdmin_ifNotAdmin() public {
+    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
+
+    assertTrue(success);
+    assertEq(address(this), abi.decode(data, (address)));
+  }
+
+  function test_implementation_returnsProxyImplementation_ifAdmin() public {
     (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("implementation()"));
 
     assertTrue(success);
@@ -83,8 +91,8 @@ contract ProxyTests is Test {
 
     assertTrue(successAdminCall);
     assertTrue(successImplementationCall);
-    assertEq(abi.decode(dataAdminCall, (string)), implementation.admin());
-    assertEq(abi.decode(dataImplementationCall, (string)), implementation.implementation());
+    assertEq(abi.decode(dataAdminCall, (address)), address(proxy));
+    assertEq(abi.decode(dataImplementationCall, (address)), address(proxy));
   }
 
   function test_callForward_throwsForUnexistingFunction_forNotAdmin() public {

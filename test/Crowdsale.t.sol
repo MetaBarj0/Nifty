@@ -4,10 +4,12 @@ pragma solidity 0.8.30;
 import { ICrowdsaleable } from "../src/interfaces/ICrowdsaleable.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
+import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
+import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
 import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
-import { FailingReceiver } from "./Mocks.sol";
+import { FailingReceiver, NonPayableContract } from "./Mocks.sol";
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 import { Test } from "forge-std/Test.sol";
@@ -23,7 +25,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     return getSutDataForCrowdsale();
   }
 
-  function table_introspection_isValidERC721TokenReceiver(SUTDatum memory sutDatum) public {
+  function table_introspection_supportsAllRequiredInterfaces(SUTDatum memory sutDatum) public {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
     bytes4 expectedRet = IERC721TokenReceiver.onERC721Received.selector;
 
@@ -37,6 +39,8 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     assertCallTrue(
       sut, user, abi.encodeWithSignature("supportsInterface(bytes4)", type(IERC721TokenReceiver).interfaceId)
     );
+    assertCallTrue(sut, user, abi.encodeWithSignature("supportsInterface(bytes4)", type(IInitializable).interfaceId));
+    assertCallTrue(sut, user, abi.encodeWithSignature("supportsInterface(bytes4)", type(IERC165).interfaceId));
   }
 
   function table_setupCrowdsale_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {
@@ -297,11 +301,33 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     );
   }
 
+  function xtable_withdrawFunds_throws_ifTransferFails(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    ICrowdsaleable.CrowdsaleData memory crowdsaleData = setupTestCrowdsaleAndBeginSalePeriod(sut);
+    vm.deal(alice, crowdsaleData.rate);
+
+    paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));
+
+    vm.warp(crowdsaleData.endWithdrawDate - 1);
+
+    address nonPayableContract = address(new NonPayableContract());
+    callForVoid(sut, crowdsaleOwner, abi.encodeWithSignature("transferOwnership(address)", nonPayableContract));
+    callForVoid(sut, nonPayableContract, abi.encodeWithSignature("acceptOwnership()"));
+
+    expectCallRevert(
+      ICrowdsaleable.WithdrawFundsTransferFailed.selector,
+      sut,
+      nonPayableContract,
+      abi.encodeWithSignature("withdrawFunds()")
+    );
+  }
+
   function table_withdrawFunds_emits_onSuccess(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
     ICrowdsaleable.CrowdsaleData memory crowdsaleData = setupTestCrowdsaleAndBeginSalePeriod(sut);
-    vm.deal(alice, 1500 gwei);
+    vm.deal(alice, 1 ether);
 
     paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));
     paidCallForUint256(sut, alice, crowdsaleData.rate, abi.encodeWithSignature("payForToken()"));

@@ -154,6 +154,11 @@ interface ICrowdsaleable {
   error CannotWithdrawFundsAfterWithdrawPeriodHasEnded();
 
   /*
+   * @notice thrown when transferring funds from contract to owner fails
+   */
+  error WithdrawFundsTransferFailed();
+
+  /*
    * @notice emitted after a successfull crowdsale setup
    * @param crowdSaleData data related to the setup crowdsale
    */
