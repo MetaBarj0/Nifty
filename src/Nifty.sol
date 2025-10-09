@@ -40,16 +40,16 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
 
   bool private paused_;
 
-  function initialize(bytes calldata data) external {
-    address implementationOwner = abi.decode(data, (address));
-    owner_ = implementationOwner;
-
-    emit OwnerChanged(address(0), owner_);
-  }
-
   /// @dev Allow to use this contract as standalone, that is without a
   ///  transparent proxy
   constructor() Ownable2Steps(msg.sender) {
+    emit OwnerChanged(address(0), owner_);
+  }
+
+  function initialize(bytes calldata data) public {
+    address implementationOwner = abi.decode(data, (address));
+    owner_ = implementationOwner;
+
     emit OwnerChanged(address(0), owner_);
   }
 

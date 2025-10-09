@@ -21,7 +21,17 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
   address private tokenContract_;
 
   constructor(address contract_) {
-    owner_ = msg.sender;
+    initialize(abi.encode(msg.sender, contract_));
+  }
+
+  function tokenContract() external view returns (address) {
+    return tokenContract_;
+  }
+
+  // BUG: IInitializable MUST ensure initialize is called only once.
+  function initialize(bytes memory data) public {
+    address contract_;
+    (owner_, contract_) = abi.decode(data, (address, address));
 
     try IERC165(contract_).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
       require(supportsIERC165, WrongTokenContract());
@@ -33,15 +43,6 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
     require(IERC165(contract_).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
 
     tokenContract_ = contract_;
-  }
-
-  function tokenContract() external view returns (address) {
-    return tokenContract_;
-  }
-
-  // BUG: IInitializable MUST ensure initialize is called only once.
-  function initialize(bytes calldata data) external {
-    (owner_, tokenContract_) = abi.decode(data, (address, address));
   }
 
   function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
