@@ -30,7 +30,7 @@ contract ValidReceiver is IERC721TokenReceiver {
   }
 }
 
-contract FailingInitializableImplementation is ERC165, IInitializable {
+contract FailingInitializableImplementation is IInitializable, ERC165 {
   function initialize(bytes calldata) external pure override {
     revert();
   }
@@ -52,12 +52,12 @@ contract TestImplementation is ERC165, IInitializable {
     return interfaceId == type(IInitializable).interfaceId || super.supportsInterface(interfaceId);
   }
 
-  function admin() external pure returns (string memory) {
-    return "admin from implementation";
+  function admin() external view returns (address) {
+    return address(this);
   }
 
-  function implementation() external pure returns (string memory) {
-    return "implementation from implementation";
+  function implementation() external view returns (address) {
+    return address(this);
   }
 
   function inc() external {
@@ -70,5 +70,17 @@ contract NotInitializableImplementation { }
 contract NonCompliantReceiver is IERC721TokenReceiver {
   function onERC721Received(address, address, uint256, bytes memory) external pure override returns (bytes4) {
     return bytes4(uint32(42));
+  }
+}
+
+contract NonPayableContract {
+  string private constant S = "Can't accept this, this is too much";
+
+  receive() external payable {
+    revert(S);
+  }
+
+  fallback() external payable {
+    revert(S);
   }
 }

@@ -9,7 +9,7 @@ import { ProxyStorage } from "./ProxyStorage.sol";
 
 // TODO: Ownable2Steps admin and changeImplementation
 contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
-  // bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
+  // NOTE: bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
   bytes32 public constant IMPLEMENTATION_SLOT = 0x89cc2b981328df209fd92734b973154b4a0db2c602160538b307a6538510f52c;
 
   address private immutable admin_;
@@ -24,9 +24,10 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
     require(success && abi.decode(r, (bool)), InvalidImplementation());
 
     (success,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
-    emit ImplementationInitialized();
 
     require(success, InvalidImplementation());
+
+    emit ImplementationInitialized();
 
     ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = implementationContract;
     admin_ = msg.sender;
@@ -34,6 +35,9 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
 
   modifier onlyAdmin() {
     if (msg.sender == admin_) {
+      // NOTE: coverage reports this line is not covered but it's not
+      // true.address If you add a console.log() for isntance instruction
+      // before _; it reports this line covered
       _;
     } else {
       fallback_(ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value);
