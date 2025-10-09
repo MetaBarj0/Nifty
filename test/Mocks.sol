@@ -2,6 +2,9 @@
 pragma solidity 0.8.30;
 
 import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
+
+import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
+import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
 import { ERC165 } from "../src/introspection/ERC165.sol";
@@ -83,4 +86,30 @@ contract NonPayableContract {
   fallback() external payable {
     revert(S);
   }
+}
+
+contract NotERC165 { }
+
+contract NotERC165Too is ERC165 {
+  function supportsInterface(bytes4) public pure override returns (bool) {
+    return false;
+  }
+}
+
+contract NotERC721 is ERC165 { }
+
+contract NotMintable is IERC721, ERC165 {
+  function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+    return interfaceId == type(IERC721).interfaceId || super.supportsInterface(interfaceId);
+  }
+
+  function balanceOf(address owner) external view returns (uint256) { }
+  function ownerOf(uint256 tokenId) external view returns (address) { }
+  function transferFrom(address from, address to, uint256 tokenId) external payable { }
+  function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) external payable { }
+  function safeTransferFrom(address from, address to, uint256 tokenId) external payable { }
+  function approve(address approved, uint256 tokenId) external payable { }
+  function setApprovalForAll(address operator, bool approved) external { }
+  function getApproved(uint256 tokenId) external view returns (address) { }
+  function isApprovedForAll(address owner, address operator) external view returns (bool) { }
 }

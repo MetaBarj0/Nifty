@@ -7,10 +7,11 @@ import { INifty } from "./interfaces/INifty.sol";
 import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
+import { IERC165 } from "./interfaces/introspection/IERC165.sol";
 import { IERC721 } from "./interfaces/token/IERC721.sol";
-
 import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
+
 import { ERC165 } from "./introspection/ERC165.sol";
 
 contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC165 {
@@ -19,12 +20,26 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
   mapping(uint256 tokenId => address buyer) private boughtTokenToBuyer_;
   address private tokenContract_;
 
-  constructor(address tokenContract) {
+  constructor(address contract_) {
     owner_ = msg.sender;
-    // TODO: ensure tokenContract is IERC721 and IMintable and IERC721Enumerable
-    tokenContract_ = tokenContract;
+
+    try IERC165(contract_).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
+      require(supportsIERC165, WrongTokenContract());
+    } catch (bytes memory) {
+      revert WrongTokenContract();
+    }
+
+    require(IERC165(contract_).supportsInterface(type(IERC721).interfaceId), WrongTokenContract());
+    require(IERC165(contract_).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
+
+    tokenContract_ = contract_;
   }
 
+  function tokenContract() external view returns (address) {
+    return tokenContract_;
+  }
+
+  // BUG: IInitializable MUST ensure initialize is called only once.
   function initialize(bytes calldata data) external {
     (owner_, tokenContract_) = abi.decode(data, (address, address));
   }
