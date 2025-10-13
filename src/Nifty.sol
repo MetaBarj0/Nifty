@@ -8,17 +8,15 @@ import { Ownable2Steps } from "./Ownable2Steps.sol";
 import { IPausable } from "./interfaces/IPausable.sol";
 import { IRevealable } from "./interfaces/IRevealable.sol";
 
+import { INifty } from "./interfaces/INifty.sol";
 import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
+import { IERC165 } from "./interfaces/introspection/IERC165.sol";
 import { IERC721 } from "./interfaces/token/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/token/IERC721Metadata.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
-
-import { IERC165 } from "./interfaces/introspection/IERC165.sol";
-
-import { INifty } from "./interfaces/INifty.sol";
 
 import { ERC165 } from "./introspection/ERC165.sol";
 
@@ -47,6 +45,8 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   }
 
   function initialize(bytes calldata data) public {
+    require(address(0) == owner_, IInitializable.ImproperInitialization());
+
     address implementationOwner = abi.decode(data, (address));
     owner_ = implementationOwner;
 

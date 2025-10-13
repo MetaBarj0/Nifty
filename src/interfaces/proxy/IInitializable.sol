@@ -8,6 +8,12 @@ pragma solidity ^0.8.0;
  */
 interface IInitializable {
   /*
+   * @notice thrown when attempting to initialize a Nifty instance already
+   *         initialized
+   */
+  error ImproperInitialization();
+
+  /*
    * @notice initialize the implementation contract after its deployment
    * @dev delegatecall this function within the proxy constructor to ensure the
    *      proxy state is initialized as the implementation contract is.

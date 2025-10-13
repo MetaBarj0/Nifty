@@ -28,8 +28,9 @@ contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC1
     return tokenContract_;
   }
 
-  // BUG: IInitializable MUST ensure initialize is called only once.
   function initialize(bytes memory data) public {
+    require(address(0) == owner_, IInitializable.ImproperInitialization());
+
     address contract_;
     (owner_, contract_) = abi.decode(data, (address, address));
 

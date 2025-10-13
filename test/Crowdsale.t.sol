@@ -9,6 +9,7 @@ import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
 import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
 
+import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
 import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
 
 import { Crowdsale } from "../src/Crowdsale.sol";
@@ -28,6 +29,15 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
     return getSutDataForCrowdsale();
+  }
+
+  function table_initialize_throws_whenImproperlyCalled(SUTDatum memory sutDatum) public {
+    expectCallRevert(
+      IInitializable.ImproperInitialization.selector,
+      sutDatum.sut,
+      niftyOwner,
+      abi.encodeWithSignature("initialize(bytes)", "")
+    );
   }
 
   function test_introspection_tokenContractSupportsAllRequiredInterfaces() public {
@@ -52,6 +62,9 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     assertNotEq(address(0), crowdsale.tokenContract());
   }
 
+  // TODO: ensure it' necessary to test this feature through proxy
+  //       take a look at coverage reports
+  // TODO: get inner error descriptor for InvalidImplementation argument
   function test_introspection_tokenContractSupportsAllRequiredInterfacesThroughProxy() public {
     address notERC165 = address(new NotERC165());
     address notERC165Too = address(new NotERC165Too());
