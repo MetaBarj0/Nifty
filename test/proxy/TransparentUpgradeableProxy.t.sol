@@ -4,7 +4,7 @@ pragma solidity 0.8.30;
 import { ITransparentUpgradeableProxy } from "../../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
 import { TransparentUpgradeableProxy } from "../../src/proxy/TransparentUpgradeableProxy.sol";
 
-import { FailingInitializableImplementation, NotInitializableImplementation, TestImplementation } from "../Mocks.sol";
+import { FailingInitializableImplementation, TestImplementation, TriviallyConstructibleContract } from "../Mocks.sol";
 
 import { Test } from "forge-std/Test.sol";
 
@@ -16,7 +16,9 @@ contract ProxyTests is Test {
 
   function setUp() public {
     implementation = new TestImplementation();
-    proxy = new TransparentUpgradeableProxy(address(implementation), abi.encode(42));
+    proxy = new TransparentUpgradeableProxy(
+      address(implementation), abi.encodeWithSelector(TestImplementation.initialize.selector, 42)
+    );
 
     alice = makeAddr("alice");
   }
@@ -26,24 +28,33 @@ contract ProxyTests is Test {
     new TransparentUpgradeableProxy(address(0), "");
   }
 
-  function test_constructor_throws_withNotInitializableImplementation() public {
-    NotInitializableImplementation notInitializableImplementation = new NotInitializableImplementation();
-
-    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
-    new TransparentUpgradeableProxy(address(notInitializableImplementation), "");
-  }
-
   function test_constructor_throws_withFailingInitializableImplementation() public {
     FailingInitializableImplementation failingInitializableImplementation = new FailingInitializableImplementation();
 
     vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
-    new TransparentUpgradeableProxy(address(failingInitializableImplementation), "");
+    new TransparentUpgradeableProxy(
+      address(failingInitializableImplementation),
+      abi.encodeWithSelector(FailingInitializableImplementation.initialize.selector)
+    );
+  }
+
+  function test_constructor_initializes_triviallyConstructibleContract() public {
+    TriviallyConstructibleContract triviallyConstructibleContract = new TriviallyConstructibleContract();
+
+    vm.expectEmit();
+    emit ITransparentUpgradeableProxy.ImplementationInitialized();
+    proxy = new TransparentUpgradeableProxy(address(triviallyConstructibleContract), "");
+
+    assertEq(address(this), proxy.admin());
+    assertEq(address(triviallyConstructibleContract), proxy.implementation());
   }
 
   function test_constructor_initializesAdminAndImplementation_forAdminAccess() public {
     vm.expectEmit();
     emit ITransparentUpgradeableProxy.ImplementationInitialized();
-    proxy = new TransparentUpgradeableProxy(address(implementation), abi.encode(42));
+    proxy = new TransparentUpgradeableProxy(
+      address(implementation), abi.encodeWithSelector(TestImplementation.initialize.selector, 42)
+    );
 
     assertEq(address(this), proxy.admin());
     assertEq(address(implementation), proxy.implementation());

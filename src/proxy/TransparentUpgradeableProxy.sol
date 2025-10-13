@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import { IInitializable } from "../interfaces/proxy/IInitializable.sol";
 import { ITransparentUpgradeableProxy } from "../interfaces/proxy/ITransparentUpgradeableProxy.sol";
 import { ERC165 } from "../introspection/ERC165.sol";
 
@@ -14,18 +13,13 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
 
   address private immutable admin_;
 
-  constructor(address implementationContract, bytes memory data) {
+  constructor(address implementationContract, bytes memory encodedCall) {
     require(implementationContract.code.length > 0, InvalidImplementation());
 
-    (bool success, bytes memory r) = implementationContract.call(
-      abi.encodeWithSignature("supportsInterface(bytes4)", type(IInitializable).interfaceId)
-    );
-
-    require(success && abi.decode(r, (bool)), InvalidImplementation());
-
-    (success,) = address(implementationContract).delegatecall(abi.encodeWithSignature("initialize(bytes)", data));
-
-    require(success, InvalidImplementation());
+    if (encodedCall.length > 0) {
+      (bool success,) = address(implementationContract).delegatecall(encodedCall);
+      require(success, InvalidImplementation());
+    }
 
     emit ImplementationInitialized();
 

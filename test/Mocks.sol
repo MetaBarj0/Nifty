@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { IInitializable } from "../src/interfaces/proxy/IInitializable.sol";
-
 import { IERC165 } from "../src/interfaces/introspection/IERC165.sol";
 import { IERC721 } from "../src/interfaces/token/IERC721.sol";
 import { IERC721TokenReceiver } from "../src/interfaces/token/IERC721TokenReceiver.sol";
@@ -33,26 +31,19 @@ contract ValidReceiver is IERC721TokenReceiver {
   }
 }
 
-contract FailingInitializableImplementation is IInitializable, ERC165 {
-  function initialize(bytes calldata) external pure override {
-    revert();
-  }
+contract TriviallyConstructibleContract { }
 
-  function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-    return interfaceId == type(IInitializable).interfaceId || super.supportsInterface(interfaceId);
+contract FailingInitializableImplementation {
+  function initialize(bytes calldata) external pure {
+    revert();
   }
 }
 
-contract TestImplementation is ERC165, IInitializable {
+contract TestImplementation {
   uint256 public foo;
 
-  function initialize(bytes calldata data) external override {
-    (uint256 value) = abi.decode(data, (uint256));
+  function initialize(uint256 value) external {
     foo = value;
-  }
-
-  function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-    return interfaceId == type(IInitializable).interfaceId || super.supportsInterface(interfaceId);
   }
 
   function admin() external view returns (address) {
@@ -67,8 +58,6 @@ contract TestImplementation is ERC165, IInitializable {
     foo++;
   }
 }
-
-contract NotInitializableImplementation { }
 
 contract NonCompliantReceiver is IERC721TokenReceiver {
   function onERC721Received(address, address, uint256, bytes memory) external pure override returns (bytes4) {

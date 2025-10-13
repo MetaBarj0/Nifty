@@ -42,8 +42,11 @@ abstract contract NiftyTestUtils is Test {
     crowdsale = new Crowdsale(address(nifty));
     vm.stopPrank();
 
-    niftyProxy = new TransparentUpgradeableProxy(address(nifty), abi.encode(niftyOwner));
-    crowdsaleProxy = new TransparentUpgradeableProxy(address(crowdsale), abi.encode(crowdsaleOwner, address(nifty)));
+    niftyProxy =
+      new TransparentUpgradeableProxy(address(nifty), abi.encodeWithSelector(Nifty.initialize.selector, niftyOwner));
+    crowdsaleProxy = new TransparentUpgradeableProxy(
+      address(crowdsale), abi.encodeWithSelector(Crowdsale.initialize.selector, crowdsaleOwner, address(nifty))
+    );
 
     vm.startPrank(niftyOwner);
     nifty.authorizeMinter(address(crowdsale), true);

@@ -11,13 +11,11 @@ import { IOwnable2Steps } from "./IOwnable2Steps.sol";
 import { IPausable } from "./IPausable.sol";
 import { IRevealable } from "./IRevealable.sol";
 
-import { IInitializable } from "./proxy/IInitializable.sol";
 import { IBurnable } from "./token/IBurnable.sol";
 import { IMintable } from "./token/IMintable.sol";
 
 /// @title The minimal set of features to implement a INifty like token
 interface INifty is
-  IInitializable,
   IERC721,
   IERC721Enumerable,
   IERC721Metadata,
@@ -50,4 +48,8 @@ interface INifty is
   ///  compliant onERC721Received function as defined in the
   ///  IERC721TokenReceiver interface
   error InvalidReceiver();
+
+  /// @notice thrown when an user attempt to initialize a Nifty instance more
+  ///  than once
+  error BadInitialization();
 }

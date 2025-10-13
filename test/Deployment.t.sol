@@ -23,7 +23,7 @@ contract DeploymentTests is Test, NiftyTestUtils {
   function test_initializationThroughTransparentProxy_emitsAnOwnerChangedEvent() public {
     vm.expectEmit();
     emit IOwnable2Steps.OwnerChanged(address(0), address(this));
-    new TransparentUpgradeableProxy(address(nifty), abi.encode(address(this)));
+    new TransparentUpgradeableProxy(address(nifty), abi.encodeWithSelector(Nifty.initialize.selector, address(this)));
   }
 
   function table_deploy_ownerIsSet(SUTDatum calldata sutDatum) public {

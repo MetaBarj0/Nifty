@@ -9,7 +9,6 @@ import { IPausable } from "./interfaces/IPausable.sol";
 import { IRevealable } from "./interfaces/IRevealable.sol";
 
 import { INifty } from "./interfaces/INifty.sol";
-import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
 import { IERC165 } from "./interfaces/introspection/IERC165.sol";
@@ -44,19 +43,18 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     emit OwnerChanged(address(0), owner_);
   }
 
-  function initialize(bytes calldata data) public {
-    require(address(0) == owner_, IInitializable.ImproperInitialization());
+  function initialize(address contractOwner) public {
+    require(address(0) == owner_, INifty.BadInitialization());
 
-    address implementationOwner = abi.decode(data, (address));
-    owner_ = implementationOwner;
+    owner_ = contractOwner;
 
     emit OwnerChanged(address(0), owner_);
   }
 
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
     return interfaceId == type(IERC721).interfaceId || interfaceId == type(IERC721Enumerable).interfaceId
-      || interfaceId == type(IERC721Metadata).interfaceId || interfaceId == type(IInitializable).interfaceId
-      || interfaceId == type(IMintable).interfaceId || super.supportsInterface(interfaceId);
+      || interfaceId == type(IERC721Metadata).interfaceId || interfaceId == type(IMintable).interfaceId
+      || super.supportsInterface(interfaceId);
   }
 
   function balanceOf(address tokenOwner) external view returns (uint256) {

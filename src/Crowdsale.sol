@@ -4,7 +4,6 @@ pragma solidity 0.8.30;
 import { ICrowdsaleable } from "./interfaces/ICrowdsaleable.sol";
 
 import { INifty } from "./interfaces/INifty.sol";
-import { IInitializable } from "./interfaces/proxy/IInitializable.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
 import { IERC165 } from "./interfaces/introspection/IERC165.sol";
@@ -14,41 +13,38 @@ import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.so
 
 import { ERC165 } from "./introspection/ERC165.sol";
 
-contract Crowdsale is ICrowdsaleable, IInitializable, IERC721TokenReceiver, ERC165 {
+contract Crowdsale is ICrowdsaleable, IERC721TokenReceiver, ERC165 {
   address private owner_;
   CrowdsaleData private crowdsaleData_;
   mapping(uint256 tokenId => address buyer) private boughtTokenToBuyer_;
   address private tokenContract_;
 
   constructor(address contract_) {
-    initialize(abi.encode(msg.sender, contract_));
+    initialize(msg.sender, contract_);
   }
 
   function tokenContract() external view returns (address) {
     return tokenContract_;
   }
 
-  function initialize(bytes memory data) public {
-    require(address(0) == owner_, IInitializable.ImproperInitialization());
+  function initialize(address contractOwner, address implementationContract) public {
+    require(address(0) == owner_, INifty.BadInitialization());
 
-    address contract_;
-    (owner_, contract_) = abi.decode(data, (address, address));
-
-    try IERC165(contract_).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
+    try IERC165(implementationContract).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
       require(supportsIERC165, WrongTokenContract());
     } catch (bytes memory) {
       revert WrongTokenContract();
     }
 
-    require(IERC165(contract_).supportsInterface(type(IERC721).interfaceId), WrongTokenContract());
-    require(IERC165(contract_).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
+    require(IERC165(implementationContract).supportsInterface(type(IERC721).interfaceId), WrongTokenContract());
+    require(IERC165(implementationContract).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
 
-    tokenContract_ = contract_;
+    tokenContract_ = implementationContract;
+    owner_ = contractOwner;
   }
 
   function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-    return interfaceId == type(IInitializable).interfaceId || interfaceId == type(IERC721TokenReceiver).interfaceId
-      || super.supportsInterface(interfaceId);
+    return interfaceId == type(IERC721TokenReceiver).interfaceId || super.supportsInterface(interfaceId);
   }
 
   function onERC721Received(address, address, uint256, bytes memory) external pure returns (bytes4) {
