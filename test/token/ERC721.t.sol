@@ -295,4 +295,38 @@ contract ERC721Tests is Test, NiftyTestUtils {
 
     assertEq(address(0), callForAddress(sut, user, abi.encodeWithSignature("getApproved(uint256)", 0)));
   }
+
+  function table_safeTransferFrom_succeeds_andUpdateIndexOfTokenForOwner(SUTDatum memory sutDatum) public {
+    (address sut, address user) = (sutDatum.sut, sutDatum.user);
+
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 41);
+    paidMint(sut, alice, 42);
+    paidMint(sut, alice, 43);
+    paidMint(sut, alice, 44);
+    paidMint(sut, alice, 45);
+
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, bob, 41));
+    assertEq(41, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 0)));
+    assertEq(45, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
+    assertEq(43, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 2)));
+    assertEq(44, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 3)));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, chuck, 43));
+    assertEq(43, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", chuck, 0)));
+    assertEq(45, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
+    assertEq(44, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 2)));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, david, 44));
+    assertEq(44, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", david, 0)));
+    assertEq(45, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 1)));
+
+    callForVoid(sut, alice, abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", alice, bob, 42));
+    assertEq(41, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 0)));
+    assertEq(42, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", bob, 1)));
+    assertEq(45, callForUint256(sut, user, abi.encodeWithSignature("tokenOfOwnerByIndex(address,uint256)", alice, 0)));
+  }
 }

@@ -86,11 +86,12 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     require(from == tokenOwner && (msg.sender == tokenOwner || msg.sender == approved || isOperator), Unauthorized());
 
     balances[from]--;
-    balances[to]++;
-    tokenIdToOwner[tokenId] = to;
-    delete tokenIdToApproved[tokenId];
 
-    // BUG: owner token index are not updated
+    updateTokenEnumerations(from, to, tokenId);
+
+    balances[to]++;
+
+    resetApprovalForToken(to, tokenId);
 
     tryReceive(msg.sender, from, to, tokenId, data);
 
@@ -294,5 +295,34 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
 
   function paused() external view returns (bool) {
     return paused_;
+  }
+
+  function updateTokenEnumerations(address from, address to, uint256 tokenId) private {
+    mapping(uint256 tokenIndex => uint256 tokenId) storage fromTokenIndexToTokenId = ownerTokenIndexToTokenId[from];
+    mapping(uint256 tokenIndex => uint256 tokenId) storage fromTokenIdToTokenIndex = ownerTokenIdToTokenIndex[from];
+
+    // NOTE: making a swap between token to transfer and the last token of
+    //       `from` iff not the last index
+    uint256 lastFromTokenIndex = balances[from];
+    uint256 fromTokenIndex = fromTokenIdToTokenIndex[tokenId];
+
+    if (fromTokenIndex != lastFromTokenIndex) {
+      uint256 lastFromTokenId = fromTokenIndexToTokenId[lastFromTokenIndex];
+      fromTokenIndexToTokenId[fromTokenIndex] = lastFromTokenId;
+      fromTokenIdToTokenIndex[lastFromTokenId] = fromTokenIndex;
+    }
+
+    // NOTE: Removing last entries
+    delete fromTokenIdToTokenIndex[tokenId];
+    delete fromTokenIndexToTokenId[lastFromTokenIndex];
+
+    // NOTE: updating token enumerations for `to`
+    ownerTokenIndexToTokenId[to][balances[to]] = tokenId;
+    ownerTokenIdToTokenIndex[to][tokenId] = balances[to];
+  }
+
+  function resetApprovalForToken(address to, uint256 tokenId) private {
+    tokenIdToOwner[tokenId] = to;
+    delete tokenIdToApproved[tokenId];
   }
 }
