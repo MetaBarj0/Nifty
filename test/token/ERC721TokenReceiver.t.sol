@@ -3,12 +3,10 @@ pragma solidity 0.8.30;
 
 import { INifty } from "../../src/interfaces/INifty.sol";
 
-import { Test } from "forge-std/Test.sol";
-
 import { FailingReceiver, InvalidReceiver, NonCompliantReceiver, ValidReceiver } from "../Mocks.sol";
 import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
-contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
+contract ERC721TokenReceiverTests is NiftyTestUtils {
   address private alice;
   InvalidReceiver private invalidReceiver;
   FailingReceiver private failingReceiver;

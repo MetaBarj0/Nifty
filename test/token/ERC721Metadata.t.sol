@@ -5,11 +5,9 @@ import { IERC721Metadata } from "../../src/interfaces/token/IERC721Metadata.sol"
 
 import { INifty } from "../../src/interfaces/INifty.sol";
 
-import { Test } from "forge-std/Test.sol";
-
 import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
-contract ERC721MetadataTests is Test, NiftyTestUtils {
+contract ERC721MetadataTests is NiftyTestUtils {
   address private alice;
 
   function setUp() public {

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import { INifty } from "../interfaces/INifty.sol";
 import { ITransparentUpgradeableProxy } from "../interfaces/proxy/ITransparentUpgradeableProxy.sol";
+
 import { ERC165 } from "../introspection/ERC165.sol";
 
 import { ProxyStorage } from "./ProxyStorage.sol";
 
-// TODO: Ownable2Steps admin and changeImplementation
 contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
   // NOTE: bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
   bytes32 public constant IMPLEMENTATION_SLOT = 0x89cc2b981328df209fd92734b973154b4a0db2c602160538b307a6538510f52c;
@@ -68,5 +69,19 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
       case 0 { revert(0x00, returndatasize()) }
       default { return(0x00, returndatasize()) }
     }
+  }
+
+  function upgradeToAndCall(address newImplementation, bytes calldata encodedCall) external {
+    require(admin_ == msg.sender, INifty.Unauthorized());
+    require(newImplementation.code.length > 0, InvalidImplementation());
+
+    if (encodedCall.length > 0) {
+      (bool success,) = address(newImplementation).delegatecall(encodedCall);
+      require(success, InvalidImplementation());
+    }
+
+    emit ImplementationChanged(ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value);
+
+    ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = newImplementation;
   }
 }

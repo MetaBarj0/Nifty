@@ -16,9 +16,7 @@ import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeable
 import { FailingReceiver, NonPayableContract, NotERC165, NotERC165Too, NotERC721, NotMintable } from "./Mocks.sol";
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-import { Test } from "forge-std/Test.sol";
-
-contract CrowdsaleTests is Test, NiftyTestUtils {
+contract CrowdsaleTests is NiftyTestUtils {
   address private alice;
 
   function setUp() public {

@@ -6,11 +6,9 @@ import { IOwnable2Steps } from "../src/interfaces/IOwnable2Steps.sol";
 
 import { Ownable2Steps } from "../src/Ownable2Steps.sol";
 
-import { Test } from "forge-std/Test.sol";
-
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-contract Ownable2StepsTests is Test, NiftyTestUtils {
+contract Ownable2StepsTests is NiftyTestUtils {
   address private bob;
   address private alice;
   IOwnable2Steps ownable2Steps;

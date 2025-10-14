@@ -42,20 +42,38 @@ contract FailingInitializableImplementation {
 contract TestImplementation {
   uint256 public foo;
 
-  function initialize(uint256 value) external {
+  function initialize(uint256 value) public virtual {
     foo = value;
   }
 
-  function admin() external view returns (address) {
-    return address(this);
+  function admin() external pure returns (address) {
+    return address(42);
   }
 
-  function implementation() external view returns (address) {
-    return address(this);
+  function implementation() external pure returns (address) {
+    return address(43);
   }
 
   function inc() external {
+    inc_();
+  }
+
+  function inc_() internal virtual {
     foo++;
+  }
+}
+
+contract TestNewImplementation is TestImplementation {
+  uint256 public bar;
+
+  function initialize(uint256 baseValue, uint256 newValue) external {
+    super.initialize(baseValue);
+    bar = newValue;
+  }
+
+  function inc_() internal override {
+    super.inc_();
+    bar++;
   }
 }
 

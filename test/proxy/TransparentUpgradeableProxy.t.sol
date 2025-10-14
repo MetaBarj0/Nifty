@@ -1,14 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
+import { INifty } from "../../src/interfaces/INifty.sol";
 import { ITransparentUpgradeableProxy } from "../../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
+
 import { TransparentUpgradeableProxy } from "../../src/proxy/TransparentUpgradeableProxy.sol";
 
-import { FailingInitializableImplementation, TestImplementation, TriviallyConstructibleContract } from "../Mocks.sol";
+import {
+  FailingInitializableImplementation,
+  TestImplementation,
+  TestNewImplementation,
+  TriviallyConstructibleContract
+} from "../Mocks.sol";
+import { NiftyTestUtils } from "../NiftyTestUtils.sol";
 
-import { Test } from "forge-std/Test.sol";
-
-contract ProxyTests is Test {
+contract ProxyTests is NiftyTestUtils {
   TestImplementation implementation;
   ITransparentUpgradeableProxy proxy;
 
@@ -61,17 +67,11 @@ contract ProxyTests is Test {
   }
 
   function test_admin_returnsProxyAdmin_ifAdmin() public {
-    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
-
-    assertTrue(success);
-    assertEq(address(this), abi.decode(data, (address)));
+    assertEq(address(this), callForAddress(address(proxy), address(this), abi.encodeWithSignature("admin()")));
   }
 
   function test_admin_returnsImplementationAdmin_ifNotAdmin() public {
-    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("admin()"));
-
-    assertTrue(success);
-    assertEq(address(this), abi.decode(data, (address)));
+    assertEq(implementation.admin(), callForAddress(address(proxy), alice, abi.encodeWithSignature("admin()")));
   }
 
   function test_implementation_returnsProxyImplementation_ifAdmin() public {
@@ -89,47 +89,83 @@ contract ProxyTests is Test {
   }
 
   function test_callforward_throughFallback_ifNotAdmin() public {
-    vm.startPrank(alice);
+    (address adminAddress, address implementationAddress) = (
+      callForAddress(address(proxy), alice, abi.encodeWithSignature("admin()")),
+      callForAddress(address(proxy), alice, abi.encodeWithSignature("implementation()"))
+    );
 
-    (bool successAdminCall, bytes memory dataAdminCall) = address(proxy).call(abi.encodeWithSignature("admin()"));
-    (bool successImplementationCall, bytes memory dataImplementationCall) =
-      address(proxy).call(abi.encodeWithSignature("implementation()"));
-
-    vm.stopPrank();
-
-    assertTrue(successAdminCall);
-    assertTrue(successImplementationCall);
-    assertEq(abi.decode(dataAdminCall, (address)), address(proxy));
-    assertEq(abi.decode(dataImplementationCall, (address)), address(proxy));
+    assertEq(adminAddress, implementation.admin());
+    assertEq(implementationAddress, implementation.implementation());
   }
 
   function test_callForward_throwsForUnexistingFunction_forNotAdmin() public {
-    vm.startPrank(alice);
-    (bool success,) = address(proxy).call(abi.encodeWithSignature("bar()"));
-    vm.stopPrank();
-
-    assertFalse(success);
+    vm.expectRevert();
+    callForVoid(address(proxy), alice, abi.encodeWithSignature("baz()"));
   }
 
   function test_callForward_throws_forAdmin() public {
-    (bool success, bytes memory data) = address(proxy).call(abi.encodeWithSignature("foo()"));
-
-    assertFalse(success);
-    assertEq(ITransparentUpgradeableProxy.InvalidAdminCall.selector, bytes4(data));
+    expectCallRevert(
+      ITransparentUpgradeableProxy.InvalidAdminCall.selector,
+      address(proxy),
+      address(this),
+      abi.encodeWithSignature("foo()")
+    );
   }
 
   function test_stateChangesOccurInProxyStorage_forNotAdminCalls() public {
-    vm.startPrank(alice);
+    callForVoid(address(proxy), alice, abi.encodeWithSignature("inc()"));
+    uint256 data = callForUint256(address(proxy), alice, abi.encodeWithSignature("foo()"));
 
-    (bool success,) = address(proxy).call(abi.encodeWithSignature("inc()"));
-    (, bytes memory data) = address(proxy).call(abi.encodeWithSignature("foo()"));
-
-    vm.stopPrank();
-
-    assertTrue(success);
     assertEq(address(this), proxy.admin());
     assertEq(address(implementation), proxy.implementation());
     assertEq(0, implementation.foo());
-    assertEq(43, abi.decode(data, (uint256)));
+    assertEq(43, data);
+  }
+
+  function test_upgradeToAndCall_throws_ifNotCalledByAdmin() public {
+    vm.startPrank(alice);
+
+    vm.expectRevert(INifty.Unauthorized.selector);
+    proxy.upgradeToAndCall(address(0), "");
+
+    vm.stopPrank();
+  }
+
+  function test_upgradeToAndCall_throws_withZeroAddressImplementation() public {
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    proxy.upgradeToAndCall(address(0), "");
+  }
+
+  function test_upgradeToAndCall_throws_withEOA() public {
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    proxy.upgradeToAndCall(alice, "");
+  }
+
+  function test_upgradeToAndCall_throws_withFailingInitializationContract() public {
+    FailingInitializableImplementation f = new FailingInitializableImplementation();
+
+    vm.expectRevert(ITransparentUpgradeableProxy.InvalidImplementation.selector);
+    proxy.upgradeToAndCall(address(f), abi.encodeWithSelector(FailingInitializableImplementation.initialize.selector));
+  }
+
+  function test_upgradeToAndCall_succeeds_andEmitsWithCorrectNewImplementation() public {
+    address oldImplementation = proxy.implementation();
+    TestNewImplementation newImplementation = new TestNewImplementation();
+
+    vm.expectEmit();
+    emit ITransparentUpgradeableProxy.ImplementationChanged(oldImplementation);
+    proxy.upgradeToAndCall(
+      address(newImplementation), abi.encodeWithSelector(TestNewImplementation.initialize.selector, 99, 256)
+    );
+
+    assertEq(address(newImplementation), proxy.implementation());
+
+    uint256 foo = callForUint256(address(proxy), alice, abi.encodeWithSignature("foo()"));
+    assertEq(99, foo);
+    assertEq(0, newImplementation.foo());
+
+    uint256 bar = callForUint256(address(proxy), alice, abi.encodeWithSignature("bar()"));
+    assertEq(256, bar);
+    assertEq(0, newImplementation.bar());
   }
 }

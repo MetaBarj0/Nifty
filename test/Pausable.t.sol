@@ -4,11 +4,9 @@ pragma solidity 0.8.30;
 import { INifty } from "../src/interfaces/INifty.sol";
 import { IPausable } from "../src/interfaces/IPausable.sol";
 
-import { Test } from "forge-std/Test.sol";
-
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-contract PausableTests is Test, NiftyTestUtils {
+contract PausableTests is NiftyTestUtils {
   address private alice;
 
   function setUp() public {

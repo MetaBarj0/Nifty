@@ -5,9 +5,8 @@ import { Nifty } from "../src/Nifty.sol";
 import { INifty } from "../src/interfaces/INifty.sol";
 
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
-import { Test } from "forge-std/Test.sol";
 
-contract NiftyTests is Test, NiftyTestUtils {
+contract NiftyTests is NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
     return testGetSutDataForNifty();
   }

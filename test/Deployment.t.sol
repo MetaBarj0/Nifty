@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import { Nifty } from "../src/Nifty.sol";
 import { IOwnable2Steps } from "../src/interfaces/IOwnable2Steps.sol";
 
-import { Test } from "forge-std/Test.sol";
-
+import { Nifty } from "../src/Nifty.sol";
 import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
+
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-contract DeploymentTests is Test, NiftyTestUtils {
+contract DeploymentTests is NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
     return testGetSutDataForNifty();
   }

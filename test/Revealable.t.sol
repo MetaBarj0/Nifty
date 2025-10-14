@@ -7,9 +7,7 @@ import { IMintable } from "../src/interfaces/token/IMintable.sol";
 
 import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
-import { Test } from "forge-std/Test.sol";
-
-contract RevealableTests is Test, NiftyTestUtils {
+contract RevealableTests is NiftyTestUtils {
   address private alice;
 
   function setUp() public {

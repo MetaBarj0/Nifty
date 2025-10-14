@@ -5,11 +5,9 @@ import { IERC721 } from "../../src/interfaces/token/IERC721.sol";
 
 import { INifty } from "../../src/interfaces/INifty.sol";
 
-import { Test, console } from "forge-std/Test.sol";
-
 import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
-contract BurnableTests is Test, NiftyTestUtils {
+contract BurnableTests is NiftyTestUtils {
   address private bob;
   address private alice;
 

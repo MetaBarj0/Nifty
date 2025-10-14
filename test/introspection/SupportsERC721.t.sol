@@ -9,9 +9,7 @@ import { IERC721Metadata } from "../../src/interfaces/token/IERC721Metadata.sol"
 
 import { NiftyTestUtils, SUTDatum } from "../NiftyTestUtils.sol";
 
-import { Test } from "forge-std/Test.sol";
-
-contract ERC165Tests is Test, NiftyTestUtils {
+contract ERC165Tests is NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
     return testGetSutDataForNifty();
   }
