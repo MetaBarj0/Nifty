@@ -24,7 +24,7 @@ contract ERC721TokenReceiverTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_mint_throws_withInvalidReceiverContract(SUTDatum memory sutDatum) public {

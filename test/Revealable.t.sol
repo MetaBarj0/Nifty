@@ -17,7 +17,7 @@ contract RevealableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_tokenURI_isEmpty_beforeCommitRevealPropertiesCall(SUTDatum memory sutDatum) public {

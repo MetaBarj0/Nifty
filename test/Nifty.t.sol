@@ -9,7 +9,7 @@ import { Test } from "forge-std/Test.sol";
 
 contract NiftyTests is Test, NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_initialize_throws_whenImproperlyCalled(SUTDatum memory sutDatum) public {

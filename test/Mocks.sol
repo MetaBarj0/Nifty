@@ -34,7 +34,7 @@ contract ValidReceiver is IERC721TokenReceiver {
 contract TriviallyConstructibleContract { }
 
 contract FailingInitializableImplementation {
-  function initialize(bytes calldata) external pure {
+  function initialize() external pure {
     revert();
   }
 }
@@ -71,10 +71,6 @@ contract NonPayableContract {
   receive() external payable {
     revert(S);
   }
-
-  fallback() external payable {
-    revert(S);
-  }
 }
 
 contract NotERC165 { }
@@ -91,6 +87,9 @@ contract NotMintable is IERC721, ERC165 {
   function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
     return interfaceId == type(IERC721).interfaceId || super.supportsInterface(interfaceId);
   }
+
+  // NOTE: test file, I don't care to test unused function below
+  function test() external pure { }
 
   function balanceOf(address owner) external view returns (uint256) { }
   function ownerOf(uint256 tokenId) external view returns (address) { }

@@ -16,7 +16,7 @@ contract PausableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_pause_throws_ifNotCalledByOwner(SUTDatum memory sutDatum) public {

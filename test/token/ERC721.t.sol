@@ -23,7 +23,7 @@ contract ERC721Tests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_balanceOf_returns0_forUserHavingNoToken(SUTDatum memory sutDatum) public {

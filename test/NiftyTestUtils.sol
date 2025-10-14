@@ -54,7 +54,7 @@ abstract contract NiftyTestUtils is Test {
     vm.stopPrank();
   }
 
-  function getSutDataForNifty() internal view returns (SUTDatum[] memory) {
+  function testGetSutDataForNifty() internal view returns (SUTDatum[] memory) {
     SUTDatum[] memory sutData = new SUTDatum[](2);
     sutData[0].sut = address(nifty);
     sutData[0].user = niftyOwner;
@@ -64,7 +64,7 @@ abstract contract NiftyTestUtils is Test {
     return sutData;
   }
 
-  function getSutDataForCrowdsale() internal view returns (SUTDatum[] memory) {
+  function testGetSutDataForCrowdsale() internal view returns (SUTDatum[] memory) {
     SUTDatum[] memory sutData = new SUTDatum[](2);
     sutData[0].sut = address(crowdsale);
     sutData[0].user = crowdsaleOwner;

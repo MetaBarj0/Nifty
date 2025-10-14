@@ -21,7 +21,7 @@ contract ERC721EnumerableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_totalSupply_returns0AtContractInitialization(SUTDatum memory sutDatum) public {

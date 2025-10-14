@@ -19,7 +19,7 @@ contract BurnableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_burn_throw_forNotMintedToken(SUTDatum calldata sutDatum) public {

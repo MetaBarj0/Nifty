@@ -16,7 +16,7 @@ contract MintableTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_mint_throws_forZeroDestinationAddress(SUTDatum memory sutDatum) public {

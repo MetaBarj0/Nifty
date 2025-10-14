@@ -6,7 +6,11 @@ import { Nifty } from "../src/Nifty.sol";
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
-contract SepoliaDeployScript is Script {
+// TODO: deploy scripts for Crowdsale and Proxy
+contract NiftyLocalDeployScript is Script {
+  // NOTE: To mute uncovered items in coverage reports
+  function test() public { }
+
   function setUp() public { }
 
   function run() public {

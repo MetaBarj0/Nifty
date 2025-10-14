@@ -17,7 +17,7 @@ contract ERC721MetadataTests is Test, NiftyTestUtils {
   }
 
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function table_name_succeeds_afterDeploy(SUTDatum memory sutDatum) public {

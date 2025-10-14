@@ -11,7 +11,7 @@ import { NiftyTestUtils, SUTDatum } from "./NiftyTestUtils.sol";
 
 contract DeploymentTests is Test, NiftyTestUtils {
   function fixtureSutDatum() public view returns (SUTDatum[] memory) {
-    return getSutDataForNifty();
+    return testGetSutDataForNifty();
   }
 
   function test_deploy_emitsAnOwnerChangedEvent() public {
