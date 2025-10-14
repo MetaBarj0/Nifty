@@ -11,16 +11,16 @@ import { IERC721 } from "./interfaces/token/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
 
+import { Ownable2Steps } from "./Ownable2Steps.sol";
 import { ERC165 } from "./introspection/ERC165.sol";
 
-contract Crowdsale is ICrowdsaleable, IERC721TokenReceiver, ERC165 {
-  address private owner_;
+contract Crowdsale is ICrowdsaleable, IERC721TokenReceiver, ERC165, Ownable2Steps {
   CrowdsaleData private crowdsaleData_;
   mapping(uint256 tokenId => address buyer) private boughtTokenToBuyer_;
   address private tokenContract_;
 
-  constructor(address contract_) {
-    initialize(msg.sender, contract_);
+  constructor(address implementationContract) Ownable2Steps(msg.sender) {
+    initializeImplementation_(implementationContract);
   }
 
   function tokenContract() external view returns (address) {
@@ -30,17 +30,9 @@ contract Crowdsale is ICrowdsaleable, IERC721TokenReceiver, ERC165 {
   function initialize(address contractOwner, address implementationContract) public {
     require(address(0) == owner_, INifty.BadInitialization());
 
-    try IERC165(implementationContract).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
-      require(supportsIERC165, WrongTokenContract());
-    } catch (bytes memory) {
-      revert WrongTokenContract();
-    }
-
-    require(IERC165(implementationContract).supportsInterface(type(IERC721).interfaceId), WrongTokenContract());
-    require(IERC165(implementationContract).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
-
-    tokenContract_ = implementationContract;
     owner_ = contractOwner;
+
+    initializeImplementation_(implementationContract);
   }
 
   function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -112,6 +104,21 @@ contract Crowdsale is ICrowdsaleable, IERC721TokenReceiver, ERC165 {
 
     emit FundsWithdrawn(owner_, balance);
 
-    payable(owner_).transfer(balance);
+    if (!payable(owner_).send(balance)) {
+      revert ICrowdsaleable.WithdrawFundsTransferFailed();
+    }
+  }
+
+  function initializeImplementation_(address implementationContract) private {
+    try IERC165(implementationContract).supportsInterface(type(IERC165).interfaceId) returns (bool supportsIERC165) {
+      require(supportsIERC165, WrongTokenContract());
+    } catch (bytes memory) {
+      revert WrongTokenContract();
+    }
+
+    require(IERC165(implementationContract).supportsInterface(type(IERC721).interfaceId), WrongTokenContract());
+    require(IERC165(implementationContract).supportsInterface(type(IMintable).interfaceId), WrongTokenContract());
+
+    tokenContract_ = implementationContract;
   }
 }

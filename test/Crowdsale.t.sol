@@ -354,7 +354,7 @@ contract CrowdsaleTests is Test, NiftyTestUtils {
     );
   }
 
-  function xtable_withdrawFunds_throws_ifTransferFails(SUTDatum memory sutDatum) public {
+  function table_withdrawFunds_throws_ifTransferFails(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
     ICrowdsaleable.CrowdsaleData memory crowdsaleData = setupTestCrowdsaleAndBeginSalePeriod(sut);
