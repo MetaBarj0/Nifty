@@ -24,18 +24,21 @@ interface ITransparentUpgradeableProxy {
   /// @notice Emitted when the underlying contract implementation has changed
   event ImplementationChanged(address oldImplementation);
 
+  /// @notice emitted after a successful admin change
+  /// @param oldAdmin the old admin before change
+  /// @param newAdmin the new admin
+  event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
+
   /// @notice accessor for the admin address of the proxy deployment
   /// @dev Only executed if called by the actual admin. If sender is not the
   ///  admin, the call must be forwarded to the actual implementation
   /// @return The admin address of the proxy
-  // TODO: might be view
   function admin() external returns (address);
 
   /// @notice accessor for the implementation logic contract address
   /// @dev Only executed if called by the actual admin. If sender is not the
   ///  admin, the call must be forwarded to the actual implementation
   /// @return The address of the logic contract
-  // TODO: might be view
   function implementation() external returns (address);
 
   /// @notice upgrade the underlying implementation of this proxy instance and
@@ -51,4 +54,11 @@ interface ITransparentUpgradeableProxy {
   ///  old one as much as possible to avoid state collision.
   /// @param encodedCall an encoded call to an initialization function
   function upgradeToAndCall(address newImplementation, bytes calldata encodedCall) external;
+
+  /// @notice change the actual admin of this proxy
+  /// @dev MUST throw if:
+  ///  - not called by the actual admin
+  ///  Must emit an AdminChanged event on success
+  ///  Passing zero address is equivalent to renouncing admin right
+  function changeAdmin(address newAdmin) external;
 }

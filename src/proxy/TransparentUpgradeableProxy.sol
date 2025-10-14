@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
+pragma solidity 0.8.30;
 
 import { INifty } from "../interfaces/INifty.sol";
 import { ITransparentUpgradeableProxy } from "../interfaces/proxy/ITransparentUpgradeableProxy.sol";
-
-import { ERC165 } from "../introspection/ERC165.sol";
 
 import { ProxyStorage } from "./ProxyStorage.sol";
 
@@ -12,7 +10,8 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
   // NOTE: bytes32(keccak256("ITransparentUpgradeableProxy.implementation"));
   bytes32 public constant IMPLEMENTATION_SLOT = 0x89cc2b981328df209fd92734b973154b4a0db2c602160538b307a6538510f52c;
 
-  address private immutable admin_;
+  // NOTE: bytes32(keccak256("ITransparentUpgradeableProxy.admin"));
+  bytes32 public constant ADMIN_SLOT = 0x17da58f47bb1f038be851443e55e9d9763e9c1c06cc9b1f1bfac7eebac2b38b7;
 
   constructor(address implementationContract, bytes memory encodedCall) {
     require(implementationContract.code.length > 0, InvalidImplementation());
@@ -25,13 +24,13 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
     emit ImplementationInitialized();
 
     ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = implementationContract;
-    admin_ = msg.sender;
+    ProxyStorage.getAddressSlot(ADMIN_SLOT).value = msg.sender;
   }
 
   modifier onlyAdmin() {
-    if (msg.sender == admin_) {
+    if (getAdmin_() == msg.sender) {
       // NOTE: coverage reports this line is not covered but it's not
-      // true.address If you add a console.log() for isntance instruction
+      // true. If you add a console.log() for isntance instruction
       // before _; it reports this line covered
       _;
     } else {
@@ -40,7 +39,7 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
   }
 
   function admin() external onlyAdmin returns (address) {
-    return admin_;
+    return getAdmin_();
   }
 
   function implementation() external onlyAdmin returns (address) {
@@ -55,8 +54,30 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
     fallback_(ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value);
   }
 
+  function upgradeToAndCall(address newImplementation, bytes calldata encodedCall) external {
+    require(getAdmin_() == msg.sender, INifty.Unauthorized());
+    require(newImplementation.code.length > 0, InvalidImplementation());
+
+    if (encodedCall.length > 0) {
+      (bool success,) = address(newImplementation).delegatecall(encodedCall);
+      require(success, InvalidImplementation());
+    }
+
+    emit ImplementationChanged(ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value);
+
+    ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = newImplementation;
+  }
+
+  function changeAdmin(address newAdmin) external {
+    require(getAdmin_() == msg.sender, INifty.Unauthorized());
+
+    emit AdminChanged(getAdmin_(), newAdmin);
+
+    ProxyStorage.getAddressSlot(ADMIN_SLOT).value = newAdmin;
+  }
+
   function fallback_(address implementationContract) private {
-    require(msg.sender != admin_, InvalidAdminCall());
+    require(msg.sender != getAdmin_(), InvalidAdminCall());
 
     assembly {
       calldatacopy(0x00, 0x00, calldatasize())
@@ -71,17 +92,7 @@ contract TransparentUpgradeableProxy is ITransparentUpgradeableProxy {
     }
   }
 
-  function upgradeToAndCall(address newImplementation, bytes calldata encodedCall) external {
-    require(admin_ == msg.sender, INifty.Unauthorized());
-    require(newImplementation.code.length > 0, InvalidImplementation());
-
-    if (encodedCall.length > 0) {
-      (bool success,) = address(newImplementation).delegatecall(encodedCall);
-      require(success, InvalidImplementation());
-    }
-
-    emit ImplementationChanged(ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value);
-
-    ProxyStorage.getAddressSlot(IMPLEMENTATION_SLOT).value = newImplementation;
+  function getAdmin_() private view returns (address) {
+    return ProxyStorage.getAddressSlot(ADMIN_SLOT).value;
   }
 }

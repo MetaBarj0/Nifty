@@ -168,4 +168,27 @@ contract ProxyTests is NiftyTestUtils {
     assertEq(256, bar);
     assertEq(0, newImplementation.bar());
   }
+
+  function test_changeAdmin_throws_ifNotCalledByAdmin() public {
+    vm.startPrank(alice);
+
+    vm.expectRevert(INifty.Unauthorized.selector);
+    proxy.changeAdmin(alice);
+
+    vm.stopPrank();
+  }
+
+  function test_changeAdmin_emits_afterASuccessfulCall() public {
+    address oldAdmin = proxy.admin();
+
+    vm.expectEmit();
+    emit ITransparentUpgradeableProxy.AdminChanged(oldAdmin, alice);
+    proxy.changeAdmin(alice);
+
+    vm.startPrank(alice);
+    assertEq(alice, proxy.admin());
+    vm.stopPrank();
+
+    assertEq(implementation.admin(), proxy.admin());
+  }
 }
