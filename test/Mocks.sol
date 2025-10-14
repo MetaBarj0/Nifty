@@ -75,6 +75,8 @@ contract TestNewImplementation is TestImplementation {
     super.inc_();
     bar++;
   }
+
+  function test() private { }
 }
 
 contract NonCompliantReceiver is IERC721TokenReceiver {
@@ -106,8 +108,8 @@ contract NotMintable is IERC721, ERC165 {
     return interfaceId == type(IERC721).interfaceId || super.supportsInterface(interfaceId);
   }
 
-  // NOTE: test file, I don't care to test unused function below
-  function test() external pure { }
+  // NOTE: To mute uncovered items in coverage reports
+  function test() private { }
 
   function balanceOf(address owner) external view returns (uint256) { }
   function ownerOf(uint256 tokenId) external view returns (address) { }

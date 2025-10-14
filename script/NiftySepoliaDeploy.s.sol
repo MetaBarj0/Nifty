@@ -8,7 +8,7 @@ import { Vm } from "forge-std/Vm.sol";
 
 contract NiftySepoliaDeployScript is Script {
   // NOTE: To mute uncovered items in coverage reports
-  function test() public { }
+  function test() private { }
 
   function setUp() public { }
 

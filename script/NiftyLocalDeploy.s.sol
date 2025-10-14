@@ -9,7 +9,7 @@ import { Vm } from "forge-std/Vm.sol";
 // TODO: deploy scripts for Crowdsale and Proxy
 contract NiftyLocalDeployScript is Script {
   // NOTE: To mute uncovered items in coverage reports
-  function test() public { }
+  function test() private { }
 
   function setUp() public { }
 
