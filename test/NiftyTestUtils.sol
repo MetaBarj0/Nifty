@@ -6,7 +6,6 @@ import { INifty } from "../src/interfaces/INifty.sol";
 import { ITransparentUpgradeableProxy } from "../src/interfaces/proxy/ITransparentUpgradeableProxy.sol";
 
 import { Crowdsale } from "../src/Crowdsale.sol";
-
 import { Nifty } from "../src/Nifty.sol";
 import { TransparentUpgradeableProxy } from "../src/proxy/TransparentUpgradeableProxy.sol";
 
