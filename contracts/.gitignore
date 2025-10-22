@@ -22,3 +22,6 @@ core.*
 
 # foundry files
 foundry.lock
+
+# LSP stuff
+soljson-latest.js

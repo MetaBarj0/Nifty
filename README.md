@@ -37,18 +37,19 @@ The project follows a modular architecture with clear separation of concerns:
 
 ```
 src/
-├── Nifty.sol                  # Main NFT contract
-├── Crowdsale.sol              # Sale management contract
-├── Ownable2Steps.sol          # Enhanced ownership pattern
-├── interfaces/                # Contract interfaces
-│   ├── INifty.sol             # Main contract interface
-│   ├── ICrowdsaleable.sol     # Crowdsale interface
-│   ├── IRevealable.sol        # Metadata reveal interface
-│   └── token/                 # ERC721 related interfaces
-├── proxy/                     # Proxy implementation
-│   └── TransparentUpgradeableProxy.sol
-└── introspection/             # ERC165 implementation
-    └── ERC165.sol
+└── contracts/
+    ├── Nifty.sol                  # Main NFT contract
+    ├── Crowdsale.sol              # Sale management contract
+    ├── Ownable2Steps.sol          # Enhanced ownership pattern
+    ├── interfaces/                # Contract interfaces
+    │   ├── INifty.sol             # Main contract interface
+    │   ├── ICrowdsaleable.sol     # Crowdsale interface
+    │   ├── IRevealable.sol        # Metadata reveal interface
+    │   └── token/                 # ERC721 related interfaces
+    ├── proxy/                     # Proxy implementation
+    │   └── TransparentUpgradeableProxy.sol
+    └── introspection/             # ERC165 implementation
+        └── ERC165.sol
 ```
 
 ## 🧪 Testing & Coverage
@@ -97,6 +98,8 @@ The project leverages battle-tested OpenZeppelin primitives:
 ### Local Development
 
 ```bash
+cd contracts
+
 # Compile contracts
 make build
 
@@ -113,6 +116,8 @@ make local_deploy
 ### Sepolia Testnet Deployment
 
 ```bash
+cd contracts
+
 # Deploy to Sepolia testnet
 make sepolia_deploy
 ```
@@ -135,8 +140,7 @@ make sepolia_deploy
 │   └── SepoliaDeploy.s.sol # Sepolia deployment script
 ├── lib/                    # External dependencies (OpenZeppelin)
 ├── Makefile               # Build and deployment automation
-├── foundry.toml           # Foundry configuration
-└── README.md              # This file
+└── foundry.toml           # Foundry configuration
 ```
 
 ## 🔧 Configuration
@@ -187,4 +191,3 @@ Contributions should maintain the high standards of:
 ---
 
 Built with ❤️ using Foundry, OpenZeppelin, and modern Solidity practices.
-
