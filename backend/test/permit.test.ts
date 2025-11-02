@@ -1,4 +1,5 @@
 import { beforeAll, test, describe } from "bun:test"
+import { AbiCoder } from "ethers";
 
 import { ethers } from "ethers"
 
@@ -12,7 +13,16 @@ beforeAll(() => {
 })
 
 describe("Permit error cases", () => {
-  test("Call to permit fails for invalid permit data", () => {
+  test.skip("An exemple to show how to sign ensuring it work at anvil's side", () => {
+    const sk = new ethers.SigningKey(alice.privateKey)
+    const h = ethers.keccak256(AbiCoder.defaultAbiCoder().encode(["string"], ["encoded string"]))
+    const s = sk.sign(ethers.getBytes(h));
+    const sig = ethers.Signature.from(s);
+    console.log(`pk: ${alice.privateKey}`)
+    console.log(`sk: ${sk.privateKey}`)
+    console.log(`addr: ${ethers.computeAddress(sk)}`)
+    console.log(`h: ${h}`)
+    console.log(`sig: ${JSON.stringify(sig)}`)
   })
 })
 
