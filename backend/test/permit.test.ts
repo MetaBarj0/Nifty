@@ -3,13 +3,20 @@ import { AbiCoder } from "ethers";
 
 import { ethers } from "ethers"
 
+import latestRunJson from "../../contracts/broadcast/PrepareForPermit.s.sol/1/run-latest.json";
+import latestOutNiftyJson from "../../contracts/out/Nifty.sol/Nifty.json";
+
 let provider: ethers.JsonRpcProvider;
 let alice: ethers.Wallet
 let bob: ethers.Wallet
 
+let makeNiftyReadonly: () => ethers.Contract
+let makeNiftyWithSigner: (signer: ethers.Signer) => ethers.Contract
+
 beforeAll(() => {
   setupProvider()
   setupWallets()
+  setupContractsFactories()
 })
 
 describe("Permit error cases", () => {
@@ -36,6 +43,14 @@ describe("Permit error cases", () => {
       r: "",
       s: ""
     }
+
+    makeNiftyWithSigner(bob).permit!(
+      permitData.owner,
+      permitData.spender,
+      permitData.tokenId,
+      permitData.deadline,
+      permitData.nonce,
+      permitData.v, permitData.r, permitData.s);
   })
 })
 
@@ -52,4 +67,16 @@ function setupWallets() {
 
   alice = new ethers.Wallet(alice_pk, provider)
   bob = new ethers.Wallet(bob_pk, provider)
+}
+
+function setupContractsFactories() {
+  const niftyAddress =
+    latestRunJson.transactions
+      .filter((item) => item.contractName === "Nifty")
+      .at(0)?.contractAddress;
+
+  const niftyAbi = latestOutNiftyJson.abi;
+
+  makeNiftyReadonly = () => new ethers.Contract(niftyAddress!, niftyAbi, provider);
+  makeNiftyWithSigner = (signer: ethers.Signer) => makeNiftyReadonly().connect(signer) as ethers.Contract
 }
