@@ -147,9 +147,9 @@ contract RevealableTests is NiftyTestUtils {
     assertEq(0, callForUint256(sut, user, abi.encodeWithSignature("revealTimeLockEnd()")));
   }
 
-  function table_allTimeLockEndFunctions_returnsTimeRelativeToBlockTimestamp_whenCommitRevealPropertiesHasBeenCalled(
-    SUTDatum memory sutDatum
-  ) public {
+  function table_allTimeLockEndFunctions_returnsTimeRelativeToBlockTimestamp_whenCommitRevealPropertiesHasBeenCalled(SUTDatum memory sutDatum)
+    public
+  {
     (address sut, address user) = (sutDatum.sut, sutDatum.user);
 
     callForVoid(
