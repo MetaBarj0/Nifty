@@ -24,6 +24,19 @@ describe("Permit error cases", () => {
     console.log(`h: ${h}`)
     console.log(`sig: ${JSON.stringify(sig)}`)
   })
+
+  test("Permit call fails with invalid permit data", () => {
+    const permitData = {
+      owner: ethers.ZeroAddress,
+      spender: ethers.ZeroAddress,
+      tokenId: 0,
+      deadline: 0,
+      nonce: 0,
+      v: 0,
+      r: "",
+      s: ""
+    }
+  })
 })
 
 function setupProvider() {

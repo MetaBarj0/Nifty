@@ -8,8 +8,15 @@ export
 $(CONTRACTS_MAKEFILE_DIR)/.env:
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) $(CONTRACTS_MAKEFILE_DIR)/.env
 
-.PHONY: test
-test:
+.PHONY: setup_permit
+setup_permit:
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) kill_local_blockchain
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) run script=SetupPermit
+
+.PHONY: test
+test: setup_permit
 	@bun test
+
+.PHONY: watch
+watch: setup_permit
+	@bun test --watch
