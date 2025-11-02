@@ -11,8 +11,8 @@ beforeAll(() => {
   setupWallets()
 })
 
-describe("TODO: describe this", () => {
-  test("TODO: name this test", () => {
+describe("Permit error cases", () => {
+  test("Call to permit fails for invalid permit data", () => {
   })
 })
 
