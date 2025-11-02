@@ -15,6 +15,7 @@ import { IERC165 } from "./interfaces/introspection/IERC165.sol";
 import { IERC721 } from "./interfaces/token/IERC721.sol";
 import { IERC721Enumerable } from "./interfaces/token/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./interfaces/token/IERC721Metadata.sol";
+import { IERC721Permit } from "./interfaces/token/IERC721Permit.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
 
 import { ERC165 } from "./introspection/ERC165.sol";
@@ -322,5 +323,18 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   function resetApprovalForToken(address to, uint256 tokenId) private {
     tokenIdToOwner[tokenId] = to;
     delete tokenIdToApproved[tokenId];
+  }
+
+  function permit(
+    address owner,
+    address spender,
+    uint256 tokenId,
+    uint256 deadline,
+    uint64 nonce,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external {
+    revert IERC721Permit.InvalidPermitData();
   }
 }

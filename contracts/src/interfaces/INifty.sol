@@ -5,6 +5,7 @@ import { IERC165 } from "./introspection/IERC165.sol";
 import { IERC721 } from "./token/IERC721.sol";
 import { IERC721Enumerable } from "./token/IERC721Enumerable.sol";
 import { IERC721Metadata } from "./token/IERC721Metadata.sol";
+import { IERC721Permit } from "./token/IERC721Permit.sol";
 import { IERC721TokenReceiver } from "./token/IERC721TokenReceiver.sol";
 
 import { IOwnable2Steps } from "./IOwnable2Steps.sol";
@@ -19,6 +20,7 @@ interface INifty is
   IERC721,
   IERC721Enumerable,
   IERC721Metadata,
+  IERC721Permit,
   IOwnable2Steps,
   IMintable,
   IBurnable,
