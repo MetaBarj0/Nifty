@@ -13,6 +13,17 @@ let bob: ethers.Wallet
 let makeNiftyReadonly: () => Nifty
 let makeNiftyWithSigner: (signer: ethers.Signer) => Nifty
 
+type PermitData = {
+  owner: ethers.AddressLike,
+  spender: ethers.AddressLike,
+  tokenId: ethers.BigNumberish,
+  deadline: ethers.BigNumberish,
+  nonce: ethers.BigNumberish,
+  v: number,
+  r: ethers.BytesLike,
+  s: ethers.BytesLike
+}
+
 beforeAll(() => {
   setupProvider()
   setupWallets()
@@ -33,7 +44,7 @@ describe("Permit error cases", () => {
   })
 
   test("Permit call fails with expired deadline", async () => {
-    const permitData = {
+    const permitData: PermitData = {
       owner: ethers.ZeroAddress,
       spender: ethers.ZeroAddress,
       tokenId: 0,
@@ -44,22 +55,7 @@ describe("Permit error cases", () => {
       s: ethers.encodeBytes32String("")
     }
 
-    try {
-      await makeNiftyWithSigner(bob).permit(
-        permitData.owner,
-        permitData.spender,
-        permitData.tokenId,
-        permitData.deadline,
-        permitData.nonce,
-        permitData.v, permitData.r, permitData.s);
-    } catch (error) {
-      const e = error as { data: string }
-      if (e.data) {
-        const decodedError = makeNiftyReadonly().interface.parseError(e.data)
-
-        expect(decodedError?.name).toBe("DeadlineExpired")
-      }
-    }
+    await expectPermitCallRejectWith(permitData, "DeadlineExpired")
   })
 })
 
@@ -86,4 +82,23 @@ function setupContractsFactories() {
 
   makeNiftyReadonly = () => Nifty__factory.connect(niftyAddress, provider)
   makeNiftyWithSigner = (signer: ethers.Signer) => makeNiftyReadonly().connect(signer)
+}
+
+async function expectPermitCallRejectWith(permitData: PermitData, errorName: string) {
+  try {
+    await makeNiftyWithSigner(bob).permit(
+      permitData.owner,
+      permitData.spender,
+      permitData.tokenId,
+      permitData.deadline,
+      permitData.nonce,
+      permitData.v, permitData.r, permitData.s);
+  } catch (error) {
+    const e = error as { data: string }
+    if (e.data) {
+      const decodedError = makeNiftyReadonly().interface.parseError(e.data)
+
+      expect(decodedError?.name).toBe(errorName)
+    }
+  }
 }
