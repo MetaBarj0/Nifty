@@ -1,11 +1,10 @@
-import { beforeAll, test, describe } from "bun:test"
-import { AbiCoder } from "ethers";
+import { beforeAll, test, describe, expect } from "bun:test"
 
 import { ethers } from "ethers"
 
 import { Nifty__factory, type Nifty } from "../typechain"
 
-import latestRunJson from "../../contracts/broadcast/PrepareForPermit.s.sol/1/run-latest.json";
+import latestRunJson from "../../contracts/broadcast/SetupPermit.s.sol/1/run-latest.json";
 
 let provider: ethers.JsonRpcProvider;
 let alice: ethers.Wallet
@@ -23,7 +22,7 @@ beforeAll(() => {
 describe("Permit error cases", () => {
   test.skip("An exemple to show how to sign ensuring it work at anvil's side", () => {
     const sk = new ethers.SigningKey(alice.privateKey)
-    const h = ethers.keccak256(AbiCoder.defaultAbiCoder().encode(["string"], ["encoded string"]))
+    const h = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["encoded string"]))
     const s = sk.sign(ethers.getBytes(h));
     const sig = ethers.Signature.from(s);
     console.log(`pk: ${alice.privateKey}`)
@@ -33,7 +32,7 @@ describe("Permit error cases", () => {
     console.log(`sig: ${JSON.stringify(sig)}`)
   })
 
-  test("Permit call fails with invalid permit data", async () => {
+  test("Permit call fails with expired deadline", async () => {
     const permitData = {
       owner: ethers.ZeroAddress,
       spender: ethers.ZeroAddress,
@@ -45,13 +44,22 @@ describe("Permit error cases", () => {
       s: ethers.encodeBytes32String("")
     }
 
-    makeNiftyWithSigner(bob).permit(
-      permitData.owner,
-      permitData.spender,
-      permitData.tokenId,
-      permitData.deadline,
-      permitData.nonce,
-      permitData.v, permitData.r, permitData.s);
+    try {
+      await makeNiftyWithSigner(bob).permit(
+        permitData.owner,
+        permitData.spender,
+        permitData.tokenId,
+        permitData.deadline,
+        permitData.nonce,
+        permitData.v, permitData.r, permitData.s);
+    } catch (error) {
+      const e = error as { data: string }
+      if (e.data) {
+        const decodedError = makeNiftyReadonly().interface.parseError(e.data)
+
+        expect(decodedError?.name).toBe("DeadlineExpired")
+      }
+    }
   })
 })
 

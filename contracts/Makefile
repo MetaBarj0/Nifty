@@ -12,6 +12,12 @@ build:
 		&& git submodule update --init --recursive \
 		&& forge build
 
+.PHONY: clean
+clean:
+	@cd $(MAKEFILE_DIR) \
+		&& git submodule deinit --all \
+		&& forge clean
+
 .PHONY: test
 test:
 	@cd $(MAKEFILE_DIR) && forge test --gas-report
@@ -86,6 +92,7 @@ kill_local_blockchain:
 	@cd $(MAKEFILE_DIR) \
 		&& [ -z "$$(pidof anvil)" ] \
 		&& anvil \
+		  --quiet \
 		  --accounts 10 \
 		  --mnemonic 'wear female replace outer now merge dish hard put blur color piano runway material prefer leisure romance raven minor biology submit blouse rookie hand' \
 			--fork-url mainnet \
