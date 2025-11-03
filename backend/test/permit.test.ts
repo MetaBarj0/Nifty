@@ -57,6 +57,21 @@ describe("Permit error cases", () => {
 
     await expectPermitCallRejectWith(permitData, "DeadlineExpired")
   })
+
+  test("Permit call fails with invalid nonce", async () => {
+    const permitData: PermitData = {
+      owner: ethers.ZeroAddress,
+      spender: ethers.ZeroAddress,
+      tokenId: 0,
+      deadline: getEpochAfterMinutes(10),
+      nonce: 1,
+      v: 0,
+      r: ethers.encodeBytes32String(""),
+      s: ethers.encodeBytes32String("")
+    }
+
+    await expectPermitCallRejectWith(permitData, "InvalidNonce")
+  })
 })
 
 function setupProvider() {
@@ -101,4 +116,8 @@ async function expectPermitCallRejectWith(permitData: PermitData, errorName: str
       expect(decodedError?.name).toBe(errorName)
     }
   }
+}
+
+function getEpochAfterMinutes(minutes: number) {
+  return Math.floor(Date.now() / 1000) + minutes * 60
 }
