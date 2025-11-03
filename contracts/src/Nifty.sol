@@ -29,6 +29,7 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   mapping(address owner => mapping(uint256 index => uint256 tokenId)) private ownerTokenIndexToTokenId;
   mapping(address owner => mapping(uint256 tokenId => uint256 tokenIndex)) private ownerTokenIdToTokenIndex;
   mapping(address minter => bool authorized) private authorizedMinters_;
+  mapping(address owner => uint256 nonce) private nonces_;
 
   uint256[] private allTokens;
 
@@ -320,8 +321,8 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     delete tokenIdToApproved[tokenId];
   }
 
-  function nonces(address owner) public returns (uint256) {
-    return 0;
+  function nonces(address owner) public view returns (uint256) {
+    return nonces_[owner];
   }
 
   function permit(
@@ -343,6 +344,8 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     require(recoveredAddress == owner, IERC721Permit.InvalidSigner());
 
     approve_(owner, spender, tokenId);
+
+    nonces_[owner]++;
   }
 
   function approve_(address owner, address approved, uint256 tokenId) private {

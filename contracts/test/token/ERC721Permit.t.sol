@@ -112,11 +112,13 @@ contract ERC721Tests is NiftyTestUtils {
     );
   }
 
-  function table_permit_emits_andApprove_onSuccess(SUTDatum memory sutDatum) public {
+  function table_permit_emits_Approve_andUpdateNonces_onSuccess(SUTDatum memory sutDatum) public {
     address sut = sutDatum.sut;
 
     authorizeMinter(sut, alice, true);
     paidMint(sut, alice, 0);
+
+    assertEq(0, callForUint256(sut, alice, abi.encodeWithSignature("nonces(address)", alice)));
 
     (address owner, address spender, uint256 tokenId, uint256 deadline, uint256 nonce, uint8 v, bytes32 r, bytes32 s) =
       getPermitData_(alice, bob, 0, block.timestamp + 10 minutes, 0);
@@ -140,7 +142,8 @@ contract ERC721Tests is NiftyTestUtils {
       )
     );
 
-    assertEq(bob, callForAddress(sut, bob, abi.encodeWithSignature("getApproved(uint256)", 0)));
+    assertEq(spender, callForAddress(sut, spender, abi.encodeWithSignature("getApproved(uint256)", 0)));
+    assertEq(1, callForUint256(sut, owner, abi.encodeWithSignature("nonces(address)", owner)));
   }
 
   function getPermitData_(address owner, address spender, uint256 tokenId, uint256 deadline, uint256 nonce)
