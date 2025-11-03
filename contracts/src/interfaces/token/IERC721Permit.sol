@@ -17,10 +17,23 @@ interface IERC721Permit {
   error DeadlineExpired();
 
   /*
+   * @notice An error triggered when the specified nonce for the owner is
+   * incorrect
+   */
+  error InvalidNonce();
+
+  /*
    * @notice An error triggered when the recovered address does not match the
    * owner
    */
   error InvalidSigner();
+
+  /*
+   * @notice returns the next valid nonce for the specified owner
+   * @param owner the owner of a token
+   * @return the next valid nonce for the owner
+   */
+  function nonces(address owner) external returns (uint64);
 
   /*
    * @notice The permit function allows a sponsor to execute an approval on

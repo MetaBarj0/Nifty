@@ -325,6 +325,10 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     delete tokenIdToApproved[tokenId];
   }
 
+  function nonces(address owner) public returns (uint64) {
+    return 0;
+  }
+
   function permit(
     address owner,
     address spender,
@@ -336,6 +340,7 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     bytes32 s
   ) external {
     require(block.timestamp < deadline, IERC721Permit.DeadlineExpired());
+    require(nonces(owner) == nonce, IERC721Permit.InvalidNonce());
 
     bytes32 h = keccak256(abi.encode(owner, spender, tokenId, deadline, nonce));
     address recoveredAddress = ecrecover(h, v, r, s);
