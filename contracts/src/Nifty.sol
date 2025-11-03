@@ -102,12 +102,7 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   }
 
   function approve(address approved, uint256 tokenId) external payable {
-    address tokenOwner = tokenIdToOwner[tokenId];
-
-    require(msg.sender == tokenIdToOwner[tokenId] || ownerToOperatorApproval[tokenOwner][msg.sender], Unauthorized());
-
-    tokenIdToApproved[tokenId] = approved;
-    emit IERC721.Approval(tokenOwner, approved, tokenId);
+    approve_(msg.sender, approved, tokenId);
   }
 
   function setApprovalForAll(address operator, bool approved) external {
@@ -347,6 +342,15 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
 
     require(recoveredAddress == owner, IERC721Permit.InvalidSigner());
 
-    revert INifty.InvalidTokenId();
+    approve_(owner, spender, tokenId);
+  }
+
+  function approve_(address owner, address approved, uint256 tokenId) private {
+    address tokenOwner = tokenIdToOwner[tokenId];
+
+    require(owner == tokenIdToOwner[tokenId] || ownerToOperatorApproval[tokenOwner][owner], Unauthorized());
+
+    tokenIdToApproved[tokenId] = approved;
+    emit IERC721.Approval(tokenOwner, approved, tokenId);
   }
 }

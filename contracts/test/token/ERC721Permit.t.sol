@@ -90,12 +90,12 @@ contract ERC721Tests is NiftyTestUtils {
     );
   }
 
-  function table_throws_forInvalidToken(SUTDatum memory sutDatum) public {
+  function table_throws_forNotOwnedToken(SUTDatum memory sutDatum) public {
     (address owner, address spender, uint256 tokenId, uint256 deadline, uint256 nonce, uint8 v, bytes32 r, bytes32 s) =
       getPermitData_(alice, bob, 0, block.timestamp + 10 minutes, 0);
 
     expectCallRevert(
-      INifty.InvalidTokenId.selector,
+      INifty.Unauthorized.selector,
       sutDatum.sut,
       bob,
       abi.encodeWithSignature(
@@ -110,6 +110,37 @@ contract ERC721Tests is NiftyTestUtils {
         s
       )
     );
+  }
+
+  function table_permit_emits_andApprove_onSuccess(SUTDatum memory sutDatum) public {
+    address sut = sutDatum.sut;
+
+    authorizeMinter(sut, alice, true);
+    paidMint(sut, alice, 0);
+
+    (address owner, address spender, uint256 tokenId, uint256 deadline, uint256 nonce, uint8 v, bytes32 r, bytes32 s) =
+      getPermitData_(alice, bob, 0, block.timestamp + 10 minutes, 0);
+
+    vm.expectEmit();
+    emit IERC721.Approval(owner, spender, tokenId);
+
+    callForVoid(
+      sut,
+      bob,
+      abi.encodeWithSignature(
+        "permit(address,address,uint256,uint256,uint64,uint8,bytes32,bytes32)",
+        owner,
+        spender,
+        tokenId,
+        deadline,
+        nonce,
+        v,
+        r,
+        s
+      )
+    );
+
+    assertEq(bob, callForAddress(sut, bob, abi.encodeWithSignature("getApproved(uint256)", 0)));
   }
 
   function getPermitData_(address owner, address spender, uint256 tokenId, uint256 deadline, uint256 nonce)
