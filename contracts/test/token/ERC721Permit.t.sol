@@ -21,25 +21,6 @@ contract ERC721Tests is NiftyTestUtils {
     return testGetSutDataForNifty();
   }
 
-  function table_permit_throws_withInvalidPermitData(SUTDatum memory sutDatum) public {
-    expectCallRevert(
-      IERC721Permit.InvalidPermitData.selector,
-      sutDatum.sut,
-      alice,
-      abi.encodeWithSignature(
-        "permit(address,address,uint256,uint256,uint64,uint8,bytes32,bytes32)",
-        address(0),
-        address(0),
-        0,
-        block.timestamp + 10 minutes,
-        0,
-        0,
-        "",
-        ""
-      )
-    );
-  }
-
   function table_permit_throws_withExpiredDeadline(SUTDatum memory sutDatum) public {
     address owner = alice;
     address spender = bob;
@@ -119,6 +100,25 @@ contract ERC721Tests is NiftyTestUtils {
         v,
         r,
         s
+      )
+    );
+  }
+
+  function table_permit_throws_withInvalidPermitData(SUTDatum memory sutDatum) public {
+    expectCallRevert(
+      IERC721Permit.InvalidPermitData.selector,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature(
+        "permit(address,address,uint256,uint256,uint64,uint8,bytes32,bytes32)",
+        address(0),
+        address(0),
+        0,
+        block.timestamp + 10 minutes,
+        0,
+        0,
+        "",
+        ""
       )
     );
   }
