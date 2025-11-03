@@ -335,6 +335,8 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     bytes32 r,
     bytes32 s
   ) external {
+    require(block.timestamp < deadline, IERC721Permit.DeadlineExpired());
+
     revert IERC721Permit.InvalidPermitData();
   }
 }

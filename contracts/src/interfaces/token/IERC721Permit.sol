@@ -12,6 +12,11 @@ interface IERC721Permit {
   error InvalidPermitData();
 
   /*
+   * @notice An error triggered when the permit deadline has expired
+   */
+  error DeadlineExpired();
+
+  /*
    * @notice The permit function allows a sponsor to execute an approval on
    *         behalf of the owner of a token, provided the arguments are correct
    * @param owner the owner of the token to approve
