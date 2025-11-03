@@ -68,4 +68,31 @@ contract ERC721Tests is NiftyTestUtils {
       )
     );
   }
+
+  function table_permit_throws_withIncorrectRecoveredAddress(SUTDatum memory sutDatum) public {
+    address owner = alice;
+    address spender = bob;
+    uint256 tokenId = 0;
+    uint256 deadline = block.timestamp + 10 minutes;
+    uint64 nonce = 0;
+    bytes32 h = keccak256(abi.encode(owner, spender, tokenId, deadline, nonce));
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(aliceKey, h);
+
+    expectCallRevert(
+      IERC721Permit.InvalidSigner.selector,
+      sutDatum.sut,
+      alice,
+      abi.encodeWithSignature(
+        "permit(address,address,uint256,uint256,uint64,uint8,bytes32,bytes32)",
+        spender, // swapped owner and spender
+        owner,
+        tokenId,
+        deadline,
+        nonce,
+        v,
+        r,
+        s
+      )
+    );
+  }
 }

@@ -17,6 +17,12 @@ interface IERC721Permit {
   error DeadlineExpired();
 
   /*
+   * @notice An error triggered when the recovered address does not match the
+   * owner
+   */
+  error InvalidSigner();
+
+  /*
    * @notice The permit function allows a sponsor to execute an approval on
    *         behalf of the owner of a token, provided the arguments are correct
    * @param owner the owner of the token to approve

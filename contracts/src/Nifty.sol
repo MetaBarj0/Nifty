@@ -337,6 +337,11 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
   ) external {
     require(block.timestamp < deadline, IERC721Permit.DeadlineExpired());
 
+    bytes32 h = keccak256(abi.encode(owner, spender, tokenId, deadline, nonce));
+    address recoveredAddress = ecrecover(h, v, r, s);
+
+    require(recoveredAddress == owner, IERC721Permit.InvalidSigner());
+
     revert IERC721Permit.InvalidPermitData();
   }
 }
