@@ -10,6 +10,7 @@ $(CONTRACTS_MAKEFILE_DIR)/.env:
 
 .PHONY: setup_permit
 setup_permit:
+	@bun x typechain --target ethers-v6 --out-dir typechain --glob $(CONTRACTS_MAKEFILE_DIR)/out/**.sol/*.json
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) kill_local_blockchain
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) run script=SetupPermit
 

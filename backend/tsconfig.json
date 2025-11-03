@@ -11,6 +11,9 @@
     "allowJs": true,
     "pretty": true,
     // Bundler mode
+    "types": [
+      "bun-types"
+    ],
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

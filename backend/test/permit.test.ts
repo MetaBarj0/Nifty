@@ -3,15 +3,16 @@ import { AbiCoder } from "ethers";
 
 import { ethers } from "ethers"
 
+import { Nifty__factory, type Nifty } from "../typechain"
+
 import latestRunJson from "../../contracts/broadcast/PrepareForPermit.s.sol/1/run-latest.json";
-import latestOutNiftyJson from "../../contracts/out/Nifty.sol/Nifty.json";
 
 let provider: ethers.JsonRpcProvider;
 let alice: ethers.Wallet
 let bob: ethers.Wallet
 
-let makeNiftyReadonly: () => ethers.Contract
-let makeNiftyWithSigner: (signer: ethers.Signer) => ethers.Contract
+let makeNiftyReadonly: () => Nifty
+let makeNiftyWithSigner: (signer: ethers.Signer) => Nifty
 
 beforeAll(() => {
   setupProvider()
@@ -32,7 +33,7 @@ describe("Permit error cases", () => {
     console.log(`sig: ${JSON.stringify(sig)}`)
   })
 
-  test("Permit call fails with invalid permit data", () => {
+  test("Permit call fails with invalid permit data", async () => {
     const permitData = {
       owner: ethers.ZeroAddress,
       spender: ethers.ZeroAddress,
@@ -40,11 +41,11 @@ describe("Permit error cases", () => {
       deadline: 0,
       nonce: 0,
       v: 0,
-      r: "",
-      s: ""
+      r: ethers.encodeBytes32String(""),
+      s: ethers.encodeBytes32String("")
     }
 
-    makeNiftyWithSigner(bob).permit!(
+    makeNiftyWithSigner(bob).permit(
       permitData.owner,
       permitData.spender,
       permitData.tokenId,
@@ -73,10 +74,8 @@ function setupContractsFactories() {
   const niftyAddress =
     latestRunJson.transactions
       .filter((item) => item.contractName === "Nifty")
-      .at(0)?.contractAddress;
+      .at(0)?.contractAddress!;
 
-  const niftyAbi = latestOutNiftyJson.abi;
-
-  makeNiftyReadonly = () => new ethers.Contract(niftyAddress!, niftyAbi, provider);
-  makeNiftyWithSigner = (signer: ethers.Signer) => makeNiftyReadonly().connect(signer) as ethers.Contract
+  makeNiftyReadonly = () => Nifty__factory.connect(niftyAddress, provider)
+  makeNiftyWithSigner = (signer: ethers.Signer) => makeNiftyReadonly().connect(signer)
 }
