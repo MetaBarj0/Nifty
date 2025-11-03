@@ -347,6 +347,6 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
 
     require(recoveredAddress == owner, IERC721Permit.InvalidSigner());
 
-    revert IERC721Permit.InvalidPermitData();
+    revert INifty.InvalidTokenId();
   }
 }
