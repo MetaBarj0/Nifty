@@ -325,7 +325,7 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     delete tokenIdToApproved[tokenId];
   }
 
-  function nonces(address owner) public returns (uint64) {
+  function nonces(address owner) public returns (uint256) {
     return 0;
   }
 

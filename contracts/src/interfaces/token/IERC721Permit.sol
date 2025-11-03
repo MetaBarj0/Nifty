@@ -33,7 +33,7 @@ interface IERC721Permit {
    * @param owner the owner of a token
    * @return the next valid nonce for the owner
    */
-  function nonces(address owner) external returns (uint64);
+  function nonces(address owner) external returns (uint256);
 
   /*
    * @notice The permit function allows a sponsor to execute an approval on
