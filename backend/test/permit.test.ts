@@ -71,6 +71,19 @@ describe("Permit error cases", () => {
 
     await expectPermitCallRejectWith(bob, validPermit, "Unauthorized")
   })
+
+  test("Permit call fails for invalid signer", async () => {
+    let validPermit =
+      getPermit(alice,
+        bob.address,
+        10,
+        getEpochAfterMinutes(10),
+        0);
+
+    validPermit.owner = bob;
+
+    await expectPermitCallRejectWith(bob, validPermit, "InvalidSigner")
+  })
 })
 
 function setupProvider() {
