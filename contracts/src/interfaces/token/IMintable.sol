@@ -31,6 +31,7 @@ interface IMintable {
   /// @notice authorize or revoke the authorization of an address to mint token
   ///  of the implementing contract
   /// @dev MUST throw if not called by owner
+  ///  MUST throw if authorizing the actual owner
   /// @param minter the address to authorize or revoke
   /// @param authorized true to authorize the mint, false to revoke this right
   function authorizeMinter(address minter, bool authorized) external;

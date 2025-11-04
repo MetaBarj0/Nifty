@@ -3,12 +3,11 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import { Ownable2Steps } from "./Ownable2Steps.sol";
-
 import { IPausable } from "./interfaces/IPausable.sol";
 import { IRevealable } from "./interfaces/IRevealable.sol";
 
 import { INifty } from "./interfaces/INifty.sol";
+import { IOwnable2Steps } from "./interfaces/IOwnable2Steps.sol";
 import { IMintable } from "./interfaces/token/IMintable.sol";
 
 import { IERC165 } from "./interfaces/introspection/IERC165.sol";
@@ -19,6 +18,8 @@ import { IERC721Permit } from "./interfaces/token/IERC721Permit.sol";
 import { IERC721TokenReceiver } from "./interfaces/token/IERC721TokenReceiver.sol";
 
 import { ERC165 } from "./introspection/ERC165.sol";
+
+import { Ownable2Steps } from "./Ownable2Steps.sol";
 
 contract Nifty is INifty, ERC165, Ownable2Steps {
   mapping(uint256 => address) private tokenIdToOwner;
@@ -346,6 +347,12 @@ contract Nifty is INifty, ERC165, Ownable2Steps {
     approve_(owner, spender, tokenId);
 
     nonces_[owner]++;
+  }
+
+  function transferOwnership(address pendingOwner) public override(IOwnable2Steps, Ownable2Steps) {
+    require(authorizedMinters_[pendingOwner] == false, INifty.Unauthorized());
+
+    super.transferOwnership(pendingOwner);
   }
 
   function approve_(address owner, address approved, uint256 tokenId) private {

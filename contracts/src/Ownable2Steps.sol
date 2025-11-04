@@ -20,7 +20,7 @@ contract Ownable2Steps is IOwnable2Steps {
     return pendingOwner_;
   }
 
-  function transferOwnership(address newOwner) external virtual {
+  function transferOwnership(address newOwner) public virtual {
     require(msg.sender == owner_, INifty.Unauthorized());
 
     pendingOwner_ = newOwner;
