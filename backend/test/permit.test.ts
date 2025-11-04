@@ -86,6 +86,31 @@ describe("Permit error cases", () => {
   })
 })
 
+describe("Permit nominal cases", async () => {
+  test("Permit succeeds and approves", async () => {
+    const permit = getPermit(alice, bob.address, 0, getEpochAfterMinutes(10), 0)
+
+    await makeNiftyWithSigner(bob).permit(
+      permit.owner,
+      permit.spender,
+      permit.tokenId,
+      permit.deadline,
+      permit.nonce,
+      permit.v, permit.r, permit.s);
+
+    const niftyReadOnly = makeNiftyReadonly()
+
+    const approvalFilter = niftyReadOnly.filters.Approval(alice.address, bob.address, 0)
+    const filterLog = await niftyReadOnly.queryFilter(approvalFilter)
+
+    expect(filterLog.length).toBe(1)
+    expect(filterLog.at(0)?.args["owner"]).toBe(alice.address)
+    expect(filterLog.at(0)?.args["approved"]).toBe(bob.address)
+    expect(filterLog.at(0)?.args["tokenId"]).toBe(0n)
+    expect(bob.address).toBe(await niftyReadOnly.getApproved(0n))
+  })
+})
+
 function setupProvider() {
   const host = process.env["ANVIL_HOST"]
   const port = process.env["ANVIL_PORT"]
@@ -120,7 +145,6 @@ async function expectPermitCallRejectWith(signer: ethers.Wallet, permitData: Per
       permitData.deadline,
       permitData.nonce,
       permitData.v, permitData.r, permitData.s);
-
   } catch (error) {
     const e = error as { data: string }
     if (e.data) {
