@@ -14,6 +14,7 @@ architecture, and extensive functionality built on Ethereum.
 - **Revealable Metadata**: Support for hidden/revealed NFT mechanics common in modern drops
 - **2-Step Ownership**: Enhanced ownership transfer security using OpenZeppelin's 2-step pattern
 - **ERC165 Introspection**: Full interface detection support for maximum compatibility
+- **Basic Permit feature**: non typed permit implementation. Kept simple for demonstration purpose
 
 ### Crowdsale System (`Crowdsale.sol`)
 
@@ -37,19 +38,21 @@ The project follows a modular architecture with clear separation of concerns:
 
 ```
 src/
-└── contracts/
-    ├── Nifty.sol                  # Main NFT contract
-    ├── Crowdsale.sol              # Sale management contract
-    ├── Ownable2Steps.sol          # Enhanced ownership pattern
-    ├── interfaces/                # Contract interfaces
-    │   ├── INifty.sol             # Main contract interface
-    │   ├── ICrowdsaleable.sol     # Crowdsale interface
-    │   ├── IRevealable.sol        # Metadata reveal interface
-    │   └── token/                 # ERC721 related interfaces
-    ├── proxy/                     # Proxy implementation
-    │   └── TransparentUpgradeableProxy.sol
-    └── introspection/             # ERC165 implementation
-        └── ERC165.sol
+├── contracts/
+│   ├── Nifty.sol                  # Main NFT contract
+│   ├── Crowdsale.sol              # Sale management contract
+│   ├── Ownable2Steps.sol          # Enhanced ownership pattern
+│   ├── interfaces/                # Contract interfaces
+│   │   ├── INifty.sol             # Main contract interface
+│   │   ├── ICrowdsaleable.sol     # Crowdsale interface
+│   │   ├── IRevealable.sol        # Metadata reveal interface
+│   │   └── token/                 # ERC721 related interfaces
+│   ├── proxy/                     # Proxy implementation
+│   │   └── TransparentUpgradeableProxy.sol
+│   └── introspection/             # ERC165 implementation
+│       └── ERC165.sol
+└── backend/
+│   └── test/                      # tests
 ```
 
 ## 🧪 Testing & Coverage
@@ -74,6 +77,7 @@ The project maintains **100% test coverage** across all critical components:
 - Pausable functionality
 - Metadata reveal mechanics
 - Token enumeration features
+- ERC721Permit permit feature for token approval
 
 ## 🛠️ OpenZeppelin Integration
 
