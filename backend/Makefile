@@ -11,6 +11,7 @@ $(CONTRACTS_MAKEFILE_DIR)/.env:
 
 .PHONY: generate_contract_types
 generate_contract_types:
+	@bun install
 	@$(MAKE) -C $(CONTRACTS_MAKEFILE_DIR) clean build
 	@bun x typechain --target ethers-v6 --out-dir typechain --glob $(CONTRACTS_MAKEFILE_DIR)/out/**.sol/*.json
 
