@@ -31,22 +31,10 @@ beforeAll(() => {
 })
 
 describe("Permit error cases", () => {
-  test.skip("An exemple to show how to sign ensuring it work at anvil's side", () => {
-    const sk = new ethers.SigningKey(alice.privateKey)
-    const h = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["encoded string"]))
-    const s = sk.sign(ethers.getBytes(h));
-    const sig = ethers.Signature.from(s);
-    console.log(`pk: ${alice.privateKey}`)
-    console.log(`sk: ${sk.privateKey}`)
-    console.log(`addr: ${ethers.computeAddress(sk)}`)
-    console.log(`h: ${h}`)
-    console.log(`sig: ${JSON.stringify(sig)}`)
-  })
-
   test("Permit call fails with expired deadline", async () => {
     const permitData: PermitData = {
-      owner: ethers.ZeroAddress,
-      spender: ethers.ZeroAddress,
+      owner: alice,
+      spender: bob,
       tokenId: 0,
       deadline: 0,
       nonce: 0,
@@ -55,13 +43,13 @@ describe("Permit error cases", () => {
       s: ethers.encodeBytes32String("")
     }
 
-    await expectPermitCallRejectWith(permitData, "DeadlineExpired")
+    await expectPermitCallRejectWith(bob, permitData, "DeadlineExpired")
   })
 
   test("Permit call fails with invalid nonce", async () => {
     const permitData: PermitData = {
-      owner: ethers.ZeroAddress,
-      spender: ethers.ZeroAddress,
+      owner: alice,
+      spender: bob,
       tokenId: 0,
       deadline: getEpochAfterMinutes(10),
       nonce: 1,
@@ -70,7 +58,18 @@ describe("Permit error cases", () => {
       s: ethers.encodeBytes32String("")
     }
 
-    await expectPermitCallRejectWith(permitData, "InvalidNonce")
+    await expectPermitCallRejectWith(bob, permitData, "InvalidNonce")
+  })
+
+  test("Permit call fails for token that does not own to the owner", async () => {
+    const validPermit =
+      getPermit(alice,
+        bob.address,
+        10,
+        getEpochAfterMinutes(10),
+        0);
+
+    await expectPermitCallRejectWith(bob, validPermit, "Unauthorized")
   })
 })
 
@@ -99,25 +98,56 @@ function setupContractsFactories() {
   makeNiftyWithSigner = (signer: ethers.Signer) => makeNiftyReadonly().connect(signer)
 }
 
-async function expectPermitCallRejectWith(permitData: PermitData, errorName: string) {
+async function expectPermitCallRejectWith(signer: ethers.Wallet, permitData: PermitData, errorName: string) {
   try {
-    await makeNiftyWithSigner(bob).permit(
+    await makeNiftyWithSigner(signer).permit(
       permitData.owner,
       permitData.spender,
       permitData.tokenId,
       permitData.deadline,
       permitData.nonce,
       permitData.v, permitData.r, permitData.s);
+
   } catch (error) {
     const e = error as { data: string }
     if (e.data) {
       const decodedError = makeNiftyReadonly().interface.parseError(e.data)
 
       expect(decodedError?.name).toBe(errorName)
+
+      return
     }
   }
+
+  throw new Error(`Expected to fail with: "${errorName}" but did not fail`)
 }
 
 function getEpochAfterMinutes(minutes: number) {
   return Math.floor(Date.now() / 1000) + minutes * 60
+}
+
+function getPermit(owner: ethers.Wallet,
+  spender: ethers.AddressLike,
+  tokenId: ethers.BigNumberish,
+  deadline: ethers.BigNumberish,
+  nonce: ethers.BigNumberish): PermitData {
+  const h =
+    ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address", "address", "uint256", "uint256", "uint256"],
+      [owner.address, spender, tokenId, deadline, 0]))
+
+  const sk = new ethers.SigningKey(owner.privateKey)
+  const s = sk.sign(ethers.getBytes(h));
+  const sig = ethers.Signature.from(s);
+
+  return {
+    owner: owner.address,
+    spender,
+    tokenId,
+    deadline,
+    nonce,
+    v: sig.v,
+    r: sig.r,
+    s: sig.s
+  }
 }
