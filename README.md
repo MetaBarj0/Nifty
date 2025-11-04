@@ -59,7 +59,7 @@ src/
 
 The project maintains **100% test coverage** across all critical components:
 
-- **14 comprehensive test suites** covering every contract function
+- **15 comprehensive test suites** covering every contract function
 - **100% line coverage** on core contracts (Nifty.sol: 151/151 lines, Crowdsale.sol: 58/58 lines)
 - **100% branch coverage** ensuring all conditional paths are tested  
 - **100% function coverage** validating every public/external function
