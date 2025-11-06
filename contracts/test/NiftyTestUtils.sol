@@ -118,13 +118,9 @@ abstract contract NiftyTestUtils is Test {
     vm.stopPrank();
   }
 
-  function expectPaidCallRevert(
-    bytes4 errorSelector,
-    uint256 value,
-    address sut,
-    address sender,
-    bytes memory callData
-  ) internal {
+  function expectPaidCallRevert(bytes4 errorSelector, uint256 value, address sut, address sender, bytes memory callData)
+    internal
+  {
     vm.startPrank(sender);
     vm.expectRevert(errorSelector);
     (bool success,) = sut.call{ value: value }(callData);
